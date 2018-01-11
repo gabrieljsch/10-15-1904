@@ -1,6 +1,6 @@
 #!/bin/sh
 echo 'test'
-python3 ex_code_1.py
+python3 main_bot_1.py
 
 # If you set the following flag, the engine won't run type asserts.
 # It may be slightly faster but you'll get more confusing error messages.

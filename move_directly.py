@@ -1,22 +1,25 @@
 
-def move_directly(unit,location_to_go):
-    unit_location = unit.location()
-    direction_to_go = unit_location.direction_to(location_to_go)
+import battlecode as bc
+import random
+import sys
+import traceback
 
-    if unit.is_move_ready == True:
+
+def move_directly(gc, unit,location_to_go):
+    unit_location = unit.location
+    map_loc = unit_location.map_location()
+    direction_to_go = map_loc.direction_to(location_to_go)
+    print("direction to go", direction_to_go)
+    print("Robot at", map_loc)
+
+    if unit.movement_heat() < 10:
     #move robot
         try:
-            gc.move_robot(1,direction_to_go)
+            print("unit id", unit.id)
+            print(gc.can_move(unit.id,direction_to_go))
+            gc.move_robot(unit.id, direction_to_go)
+            print("print(did it move?", unit.location)
         except:
+            print("actual move failed")
+            traceback.print_exc()
             pass
-
-
-def random_location():
-    earth_map = gc.starting_map.earth_map
-
-    height, width = earth_map.height, earth_map.weight
-    location_x = random.randrange(width)
-    location_y = random.randrange(height)
-    rand_loc_map = MapLocation(Earth, location_x, location_y)
-
-    return ran_loc_map
