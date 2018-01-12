@@ -4,7 +4,12 @@ import sys
 import traceback
 
 from move_directly import move_directly
-from random_location import random_location
+from make_factory_at import make_factory_at
+from split_robots import split_robots
+from worker_ai import worker_ai
+from factory_supervisor import factory_supervisor
+from gather_k import gather_k
+from military_supervisor import military_supervisor
 
 print("pystarting")
 
@@ -14,61 +19,53 @@ gc = bc.GameController()
 directions = list(bc.Direction)
 
 print("pystarted")
-
-# It's a good idea to try to keep your bots deterministic, to make debugging easier.
-# determinism isn't required, but it means that the same things will happen in every thing you run,
-# aside from turns taking slightly different amounts of time due to noise.
 random.seed(6)
 
-# let's start off with some research!
-# we can queue as much as we want.
-gc.queue_research(bc.UnitType.Rocket)
-gc.queue_research(bc.UnitType.Worker)
-gc.queue_research(bc.UnitType.Knight)
-
-my_team = gc.team()
-
+need_factory = 1
+#Running bot
 while True:
-    # We only support Python 3, which means brackets around print()
 
-    try:
-        for unit in gc.my_units():
-            active_unit = unit
+    #only run earth and red team
+    if gc.planet() is bc.Planet.Earth:
 
-    except:
-        traceback.print_exc()
-        pass
+        if gc.round()%50 == 0:
+            print("Round is:", gc.round())
 
-    try:
-        if gc.round() == 1:
-            new_location = random_location(gc, unit)
+        #set home location
+        if gc.team() is bc.Team.Red:
+            home_loc = bc.MapLocation(bc.Planet.Earth, 1,1)
+        else:
+            home_loc = bc.MapLocation(bc.Planet.Earth, 19,19)
+        #split units
+        try:
+            workers, soldiers, factories = split_robots(gc.my_units())
+        except:
+            traceback.print_exc()
+
+        #set initial values
+        try:
+            if need_factory ==1:
+                need_factory = worker_ai(gc, workers, factories, need_factory, home_loc)
+        except:
+            traceback.print_exc()
+
+        try:
+            factory_supervisor(gc,factories, soldiers)
+        except:
+            traceback.print_exc()
+
+        try:
+            if need_factory == 0:
+                gather_k(gc, workers[0])
+        except:
+            traceback.print_exc()
+
+        try:
+            military_supervisor(gc, soldiers, factories)
+        except:
+            traceback.print_exc()
 
 
-    except Exception as e:
-        print('Error:', e)
-        # use this to show where the error was
-        traceback.print_exc()
-
-    try:
-        if gc.round()%30 == 0:
-            print('pyround:', gc.round())
-            planet = gc.planet()
-            try:
-                new_location = random_location(gc, unit)
-            except:
-                pass
-
-    except:
-        print("Loc Failed")
-        pass
-
-
-    try:
-        move_directly(gc, unit,new_location)
-    except:
-        print("move Failed")
-        traceback.print_exc()
-        pass
 
     # send the actions we've performed, and wait for our next turn.
     gc.next_turn()

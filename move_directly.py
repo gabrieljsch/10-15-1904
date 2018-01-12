@@ -6,20 +6,23 @@ import traceback
 
 
 def move_directly(gc, unit,location_to_go):
-    unit_location = unit.location
-    map_loc = unit_location.map_location()
-    direction_to_go = map_loc.direction_to(location_to_go)
-    print("direction to go", direction_to_go)
-    print("Robot at", map_loc)
+    """
+    sends a unit directly to a map location
+    inputs are gc, unit as a unit, and a map location
 
+    """
+
+    #get unit map location
+    map_loc = unit.location.map_location()
+    #get direction to objective
+    direction_to_go = map_loc.direction_to(location_to_go)
+
+
+    #check cooldown
     if unit.movement_heat() < 10:
     #move robot
         try:
-            print("unit id", unit.id)
-            print(gc.can_move(unit.id,direction_to_go))
-            gc.move_robot(unit.id, direction_to_go)
-            print("print(did it move?", unit.location)
+            if gc.can_move(unit.id,direction_to_go) == True:
+                gc.move_robot(unit.id, direction_to_go)
         except:
-            print("actual move failed")
             traceback.print_exc()
-            pass
