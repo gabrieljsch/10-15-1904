@@ -5,6 +5,11 @@ import traceback
 
 
 def random_location(gc, unit):
+
+    """
+    unusued and outdated in current main
+    """
+    
     try:
 
         unit_location = unit.location
