@@ -100,7 +100,7 @@ class MoveTo(Task):
         self.nav = navigator
 
     def execute(worker):
-        
+        navigator.direct_unit(worker.unit, self.location)
 
     def is_done(worker):
         return worker.location.map_location() == self.location
