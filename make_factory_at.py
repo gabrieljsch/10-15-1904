@@ -8,7 +8,7 @@ from build_factory_at import build_factory_at
 
 
 
-def make_factory_at(gc, worker, factory_location, need_factory):
+def make_factory_at(gc, unit, factory_location, enemy_dir):
     """
     gc is game console
 
@@ -18,66 +18,22 @@ def make_factory_at(gc, worker, factory_location, need_factory):
     """
 
     #sets factory location one above given coords
-    if gc.team() is bc.Team.Red:
-        fac_location = factory_location.add(bc.Direction.North)
-    else:
-        fac_location = factory_location.add(bc.Direction.South)
+    builder_location = factory_location.clone()
+    fac_location = factory_location.add(enemy_dir)
     #tests if unit at test space
-    try:
-        on = 1
-        try:
-            test_space = gc.sense_unit_at_location(fac_location)
-            if test_space.unit_type is bc.UnitType.Factory:
-                if test_space.structure_is_built() == False:
-                    on = 2
-                if test_space.structure_is_built() == True:
-                    return 0
-        except:
-            pass
 
-    except:
-        on = 1
-        traceback.print_exc()
+    location_of_unit = unit.location.map_location()
 
-    if on == 1:
+    if location_of_unit.direction_to(builder_location) is bc.Direction.Center:
+        #at location
+        if gc.can_blueprint(unit.id, bc.UnitType.Factory, enemy_dir):
+            gc.blueprint(unit.id, bc.UnitType.Factory, enemy_dir)
+
+        else:
+            build_factory_at(gc, unit, fac_location)
+
+    else:
         try:
-            move_directly(gc, worker,factory_location)
+            move_directly(gc, unit,factory_location)
         except:
             traceback.print_exc()
-
-        try:
-            unit = worker
-            location_of_unit = unit.location.map_location()
-
-            direction_to_go = location_of_unit.direction_to(factory_location)
-            if direction_to_go is bc.Direction.Center:
-                if gc.team() is bc.Team.Red:
-                    gc.blueprint(worker.id,bc.UnitType.Factory, bc.Direction.North)
-                    fac_location = factory_location.add(bc.Direction.North)
-                else:
-                    gc.blueprint(worker.id, bc.UnitType.Factory, bc.Direction.South)
-                    fac_location = factory_location.add(bc.Direction.South)
-
-                should_be_fac = gc.sense_unit_at_location(fac_location)
-                if should_be_fac.unit_type == bc.UnitType.Factory:
-                    return 1
-
-        except:
-            traceback.print_exc()
-
-
-    if on == 2:
-        done = build_factory_at(gc, worker, fac_location,on)
-        try:
-            blueprint = gc.sense_unit_at_location(fac_location)
-            if blueprint.structure_is_built() == True:
-                done = 0
-        except:
-            traceback.print_exc()
-
-        if done == 0:
-            need_factory = 0
-            return need_factory
-
-
-    return need_factory

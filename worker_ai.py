@@ -7,7 +7,7 @@ from make_factory_at import make_factory_at
 from make_location import make_location
 from gather_k import gather_k
 
-def worker_ai(gc, workers, factories, need_factory, home_loc):
+def worker_ai(gc, workers, factories, home_loc, enemy_dir):
     """
     runs the workers of the bots
 
@@ -17,17 +17,19 @@ def worker_ai(gc, workers, factories, need_factory, home_loc):
     will return 0 when factory count == 1
     """
     try:
-        if need_factory == 1:
+        if len(workers) != 0:
             builder = workers[0]
-            location_for_factory = home_loc
+            location_for_factory = home_loc.clone()
 
             try:
-                if gc.round() >= 100:
-                    location_for_factory = home_loc.add(bc.Direction.East)
+                old_fac = gc.sense_unit_at_location(location_for_factory.add(enemy_dir))
+                if old_fac.unit_type is bc.UnitType.Factory:
+                    if old_fac.structure_is_built() == True:
+                        location_for_factory = location_for_factory.subtract(bc.Direction.West)
             except:
-                traceback.print_exc()
+                print("Opening fail")
+            make_factory_at(gc, builder, location_for_factory, enemy_dir)
 
-            need_factory = make_factory_at(gc, builder, location_for_factory, need_factory)
             try:
                 for worker in workers:
                     if worker is not workers[0]:
@@ -35,6 +37,5 @@ def worker_ai(gc, workers, factories, need_factory, home_loc):
             except:
                 traceback.print_exc()
 
-            return need_factory
     except:
         traceback.print_exc()

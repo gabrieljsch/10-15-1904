@@ -21,22 +21,24 @@ directions = list(bc.Direction)
 print("pystarted")
 random.seed(8)
 
-need_factory = 1
 #Running bot
 while True:
 
     #only run earth and red team
     if gc.planet() is bc.Planet.Earth:
 
-        # if gc.round()%50 == 0:
-        #     print("Round is:", gc.round())
-        #     print("Karbonite:", gc.karbonite())
-        #     print("Soldiers:", soldiers)
-        #     print("")
-        #     print("Factories", factories)
-        #     print("")
-        #set home location
 
+
+
+        #queue research
+        gc.queue_research(bc.UnitType.Ranger)
+        # if gc.round()%50 == 0:
+        #     print("Factories", factories)
+
+
+        if gc.round() == 100:
+            workers_needed = 3
+            factories_needed = 2
         #split units
         try:
             workers, soldiers, factories = split_robots(gc.my_units())
@@ -46,36 +48,38 @@ while True:
 
         #set home and enemy locations
         if gc.round()==1:
+            workers_needed = 1
+            factories_needed = 1
             #home is location of our worker
-            home_loc = workers[0].location.map_location()
+            new_loc = workers[0].location.map_location()
+            home_loc = new_loc.clone()
             #set locations for neart and far corner
             near_corner, far_corner = bc.MapLocation(bc.Planet.Earth, 1,1), bc.MapLocation(bc.Planet.Earth, 19,19)
             #corner we are furthur from is enemy corner
             #also move our home one closer to enemy
             if home_loc.distance_squared_to(near_corner) > home_loc.distance_squared_to(far_corner):
                 enemy_loc = near_corner
-                home_loc = home_loc.add(home_loc.direction_to(near_corner))
             else:
                 enemy_loc = far_corner
-                home_loc = home_loc.add(home_loc.direction_to(far_corner))
 
+            enemy_dir = home_loc.direction_to(enemy_loc)
+                #set initial values
 
-        #set initial values
         try:
-            if len(factories) < 1:
-                need_factory = worker_ai(gc, workers, factories, need_factory, home_loc)
+            if len(factories) < factories_needed:
+                worker_ai(gc, workers, factories, home_loc, enemy_dir)
         except:
             traceback.print_exc()
 
         try:
-            factory_supervisor(gc,factories, soldiers)
+            factory_supervisor(gc,factories, soldiers, workers)
         except:
             traceback.print_exc()
 
         try:
             if len(factories) > 0:
                 if len(workers) != 0:
-                    if len(workers) >= 2:
+                    if len(workers) > workers_needed:
                         for worker in workers:
                             gather_k(gc, worker)
                     else:
@@ -89,7 +93,7 @@ while True:
             traceback.print_exc()
 
         try:
-            military_supervisor(gc, soldiers, factories, enemy_loc)
+            military_supervisor(gc, soldiers, factories, enemy_loc, home_loc)
         except:
             traceback.print_exc()
 

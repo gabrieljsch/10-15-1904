@@ -7,7 +7,7 @@ import traceback
 from move_directly import move_directly
 
 
-def build_factory_at(gc, worker, location_of_factory, on):
+def build_factory_at(gc, worker, location_of_factory):
     """
     Subfunction of make_factory, uses a worker to build up factory
     after blueprint is laid
@@ -16,7 +16,11 @@ def build_factory_at(gc, worker, location_of_factory, on):
     built, at which point it returns as 2
     """
     #get the blueprint just laid
-    blueprint = gc.sense_unit_at_location(location_of_factory)
+    try:
+        blueprint = gc.sense_unit_at_location(location_of_factory)
+
+    except:
+        traceback.print_exc()
 
     #try to build on blueprint
     try:
@@ -28,10 +32,8 @@ def build_factory_at(gc, worker, location_of_factory, on):
 
         #if built, indicate by returing 0
         if blueprint.structure_is_built() == True:
-            return 0
+        
+            return
 
     except:
         traceback.print_exc()
-        
-    #continue by returning 2
-    return 2

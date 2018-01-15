@@ -9,7 +9,7 @@ from move_random_after_block import move_random_after_block
 
 directions = list(bc.Direction)
 
-def military_supervisor(gc, soldiers, factories, enemy_loc):
+def military_supervisor(gc, soldiers, factories, enemy_loc, home_loc):
     """
     supervises military units. In this case,builds 7 rangers,lines them
     diagonally in front of the base, then charges accross the map and attacks
@@ -21,24 +21,15 @@ def military_supervisor(gc, soldiers, factories, enemy_loc):
         release_direction = bc.Direction.North
     else:
         fac_location = factories[0].location.map_location()
-        release_direction = fac_location.direction_to(enemy_loc)
+        release_direction = home_loc.direction_to(enemy_loc)
 
+    barrier = .8
 
     if gc.team() is bc.Team.Red:
-        x = 10
-        y = 4
-        charge_direction = bc.Direction.Northeast
         oppo_team = bc.Team.Blue
 
-        barrier = .5
-
     else:
-        x = 16
-        y = 13
-        charge_direction = bc.Direction.Southwest
         oppo_team = bc.Team.Red
-
-        barrier = .5
 
     #sets charge switch
     if gc.round() <= 10:
@@ -55,13 +46,16 @@ def military_supervisor(gc, soldiers, factories, enemy_loc):
             for i in range(len(soldiers)):
                 #if soldier in garrison
                 if soldiers[i].location.is_in_garrison() ==True:
+                    garr_id = soldiers[i].location.structure()
                     #try to pull him out
-                    if gc.can_unload(factories[0].id, release_direction)==True:
-                        gc.unload(factories[0].id, release_direction)
+                    if gc.can_unload(garr_id, release_direction)==True:
+                        print("unload", garr_id, gc.round())
+                        gc.unload(garr_id, release_direction)
                     else:
                         for i in directions:
-                            if gc.can_unload(factories[0].id, i)==True:
-                                gc.unload(factories[0].id, i)
+                            if gc.can_unload(garr_id, i)==True:
+                                print("unload", garr_id, gc.round())
+                                gc.unload(garr_id, i)
     except:
         traceback.print_exc()
 
