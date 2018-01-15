@@ -70,20 +70,20 @@ class CompoundTask(Task):
 
     def execute(self, worker):
         # Processes the task queue 
-        if task_queue:
-            task = task_queue[0]
+        if self.task_queue:
+            task = self.task_queue[0]
             task.execute(worker)
             
             if task.is_done(worker):
                 # clear any completed tasks and clean up if we're
                 # completely done
-                task_queue.popleft()
-                while task_queue:
-                    task = task_queue[0]
+                self.task_queue.popleft()
+                while self.task_queue:
+                    task = self.task_queue[0]
                     # remove this task if it's done
                     if task.is_done(worker):
                         # remove the task from the task_queue
-                        task_queue.popleft()                
+                        self.task_queue.popleft()                
                     else:
                         break
         else:
