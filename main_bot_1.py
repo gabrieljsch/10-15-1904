@@ -48,6 +48,18 @@ while True:
 
         #set home and enemy locations
         if gc.round()==1:
+
+            #find all squares with Karbonite for the poor workers
+            earth_map = gc.starting_map(bc.Planet.Earth)
+            x, y = earth_map.width, earth_map.height
+            started_with_karbonite = []
+            for x in range(x):
+                for y in range(y):
+                    test_location = bc.MapLocation(bc.Planet.Earth,x,y)
+                    if earth_map.initial_karbonite_at(test_location) > 0:
+                        started_with_karbonite.append(test_location)
+        
+
             workers_needed = 1
             factories_needed = 1
             #home is location of our worker
@@ -67,7 +79,7 @@ while True:
 
         try:
             if len(factories) < factories_needed:
-                worker_ai(gc, workers, factories, home_loc, enemy_dir)
+                worker_ai(gc, workers, factories, home_loc, enemy_dir, started_with_karbonite)
         except:
             traceback.print_exc()
 
@@ -77,11 +89,11 @@ while True:
             traceback.print_exc()
 
         try:
-            if len(factories) > 0:
+            if len(factories) >= factories_needed:
                 if len(workers) != 0:
                     if len(workers) > workers_needed:
                         for worker in workers:
-                            gather_k(gc, worker)
+                            gather_k(gc, worker, started_with_karbonite, home_loc)
                     else:
                         try:
                             for worker in workers:

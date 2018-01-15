@@ -45,7 +45,6 @@ def factory_supervisor(gc, factories, soldiers, workers):
                                 gc.produce_robot(factory.id, bc.UnitType.Mage)
                             elif 1.0 - knights_p - mages_p  - rangers_p < choice:
                                 gc.produce_robot(factory.id, bc.UnitType.Ranger)
-                                print("Make ranger, carbonite is:",gc.karbonite(),factory.id)
                             elif 1.0 - knights_p - mages_p - rangers_p -healers-p < choice:
                                 gc.produce_robot(factory.id, bc.UnitType.Healer)
                     except:

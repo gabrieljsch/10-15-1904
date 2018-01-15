@@ -7,7 +7,7 @@ from make_factory_at import make_factory_at
 from make_location import make_location
 from gather_k import gather_k
 
-def worker_ai(gc, workers, factories, home_loc, enemy_dir):
+def worker_ai(gc, workers, factories, home_loc, enemy_dir, started_with_karbonite):
     """
     runs the workers of the bots
 
@@ -27,13 +27,13 @@ def worker_ai(gc, workers, factories, home_loc, enemy_dir):
                     if old_fac.structure_is_built() == True:
                         location_for_factory = location_for_factory.subtract(bc.Direction.West)
             except:
-                print("Opening fail")
+                pass
             make_factory_at(gc, builder, location_for_factory, enemy_dir)
 
             try:
                 for worker in workers:
                     if worker is not workers[0]:
-                        gather_k(gc, worker)
+                        gather_k(gc, worker, started_with_karbonite, home_loc)
             except:
                 traceback.print_exc()
 

@@ -23,7 +23,7 @@ def military_supervisor(gc, soldiers, factories, enemy_loc, home_loc):
         fac_location = factories[0].location.map_location()
         release_direction = home_loc.direction_to(enemy_loc)
 
-    barrier = .8
+    barrier = .7
 
     if gc.team() is bc.Team.Red:
         oppo_team = bc.Team.Blue
@@ -49,12 +49,10 @@ def military_supervisor(gc, soldiers, factories, enemy_loc, home_loc):
                     garr_id = soldiers[i].location.structure()
                     #try to pull him out
                     if gc.can_unload(garr_id, release_direction)==True:
-                        print("unload", garr_id, gc.round())
                         gc.unload(garr_id, release_direction)
                     else:
                         for i in directions:
                             if gc.can_unload(garr_id, i)==True:
-                                print("unload", garr_id, gc.round())
                                 gc.unload(garr_id, i)
     except:
         traceback.print_exc()
