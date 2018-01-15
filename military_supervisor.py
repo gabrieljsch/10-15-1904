@@ -7,6 +7,8 @@ import traceback
 from move_directly import move_directly
 from move_random_after_block import move_random_after_block
 
+directions = list(bc.Direction)
+
 def military_supervisor(gc, soldiers, factories, enemy_loc):
     """
     supervises military units. In this case,builds 7 rangers,lines them
@@ -36,10 +38,10 @@ def military_supervisor(gc, soldiers, factories, enemy_loc):
         charge_direction = bc.Direction.Southwest
         oppo_team = bc.Team.Red
 
-        barrier = .1
+        barrier = .5
 
     #sets charge switch
-    if gc.round() <= 60:
+    if gc.round() <= 10:
         switch = 0
     else:
         switch = 1
@@ -48,7 +50,7 @@ def military_supervisor(gc, soldiers, factories, enemy_loc):
     #if building up
     try:
         #if we have any soldiers
-        if len(soldiers) > 1:
+        if len(soldiers) > 0:
             #enumerate soldiers
             for i in range(len(soldiers)):
                 #if soldier in garrison
@@ -56,6 +58,10 @@ def military_supervisor(gc, soldiers, factories, enemy_loc):
                     #try to pull him out
                     if gc.can_unload(factories[0].id, release_direction)==True:
                         gc.unload(factories[0].id, release_direction)
+                    else:
+                        for i in directions:
+                            if gc.can_unload(factories[0].id, i)==True:
+                                gc.unload(factories[0].id, i)
     except:
         traceback.print_exc()
 
@@ -83,17 +89,16 @@ def military_supervisor(gc, soldiers, factories, enemy_loc):
                 #else continue charge
                 else:
                     #sets var for random vs move toward
-                    barrier = .35
                     if gc.is_move_ready(soldier.id) ==True:
                         which_way = random.random()
                         if which_way < barrier:
                             if gc.can_move(soldier.id, release_direction)==True:
                                 gc.move_robot(soldier.id, release_direction)
+
                             else:
                                 move_random_after_block(gc, soldier)
 
                         if which_way >= 1.0-barrier:
-
                             try:
                                 move_random_after_block(gc,soldier)
                             except:

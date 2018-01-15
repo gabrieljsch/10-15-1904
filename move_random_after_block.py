@@ -4,6 +4,7 @@ import sys
 import traceback
 
 
+
 def move_random_after_block(gc, unit):
     directions = list(bc.Direction)
 
@@ -15,8 +16,7 @@ def move_random_after_block(gc, unit):
             while gc.can_move(unit.id, new_dir) == False:
                 new_dir = random.choice(directions)
                 counter +=1
-                if counter >8:
-                    print("cant move")
+                if counter > 8:
                     break
             if gc.can_move(unit.id,new_dir) == True:
                 gc.move_robot(unit.id, new_dir)

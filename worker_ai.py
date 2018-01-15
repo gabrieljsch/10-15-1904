@@ -5,6 +5,7 @@ import traceback
 
 from make_factory_at import make_factory_at
 from make_location import make_location
+from gather_k import gather_k
 
 def worker_ai(gc, workers, factories, need_factory, home_loc):
     """
@@ -19,6 +20,12 @@ def worker_ai(gc, workers, factories, need_factory, home_loc):
         if need_factory == 1:
             builder = workers[0]
             location_for_factory = home_loc
+
+            try:
+                if gc.round() >= 100:
+                    location_for_factory = home_loc.add(bc.Direction.East)
+            except:
+                traceback.print_exc()
 
             need_factory = make_factory_at(gc, builder, location_for_factory, need_factory)
             try:

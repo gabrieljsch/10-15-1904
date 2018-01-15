@@ -4,6 +4,8 @@ import random
 import sys
 import traceback
 
+from move_random_after_block import move_random_after_block
+
 
 def move_directly(gc, unit,location_to_go):
     """
@@ -27,15 +29,8 @@ def move_directly(gc, unit,location_to_go):
 
             else:
                 try:
-                    counter = 0
-                    new_dir = random.choice(directions)
-                    while gc.can_move(unit.id, new_dir) == False:
-                        new_dir = random.choice(directions)
-                        counter +=1
-                        if counter >8:
-                            print("cant move")
-                    if gc.can_move(unit.id,new_dir) == True:
-                        gc.move_robot(unit.id, new_dir)
+                    move_random_after_block(gc, unit)
+
                 except:
                     traceback.print_exc()
 

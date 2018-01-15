@@ -25,7 +25,8 @@ def split_robots(units):
                 if unit.unit_type is bc.UnitType.Worker:
                     workers.append(unit)
                 if unit.unit_type is bc.UnitType.Factory:
-                    factories.append(unit)
+                    if unit.structure_is_built() == True:
+                        factories.append(unit)
                 if unit.unit_type is bc.UnitType.Ranger:
                     soldiers.append(unit)
                 if unit.unit_type is bc.UnitType.Mage:

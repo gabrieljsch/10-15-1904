@@ -19,7 +19,7 @@ gc = bc.GameController()
 directions = list(bc.Direction)
 
 print("pystarted")
-random.seed(6)
+random.seed(8)
 
 need_factory = 1
 #Running bot
@@ -28,16 +28,14 @@ while True:
     #only run earth and red team
     if gc.planet() is bc.Planet.Earth:
 
-        if gc.round()%50 == 0:
-            print("Round is:", gc.round())
-            print("Karbonite:", gc.karbonite())
-            print("Soldiers:", soldiers)
-            print("")
-            print("Factories", factories)
-            print("")
+        # if gc.round()%50 == 0:
+        #     print("Round is:", gc.round())
+        #     print("Karbonite:", gc.karbonite())
+        #     print("Soldiers:", soldiers)
+        #     print("")
+        #     print("Factories", factories)
+        #     print("")
         #set home location
-
-
 
         #split units
         try:
@@ -47,12 +45,13 @@ while True:
 
 
         #set home and enemy locations
-
         if gc.round()==1:
-
+            #home is location of our worker
             home_loc = workers[0].location.map_location()
-
+            #set locations for neart and far corner
             near_corner, far_corner = bc.MapLocation(bc.Planet.Earth, 1,1), bc.MapLocation(bc.Planet.Earth, 19,19)
+            #corner we are furthur from is enemy corner
+            #also move our home one closer to enemy
             if home_loc.distance_squared_to(near_corner) > home_loc.distance_squared_to(far_corner):
                 enemy_loc = near_corner
                 home_loc = home_loc.add(home_loc.direction_to(near_corner))
@@ -60,12 +59,10 @@ while True:
                 enemy_loc = far_corner
                 home_loc = home_loc.add(home_loc.direction_to(far_corner))
 
-            print("HOMELOC:",home_loc)
-            print("enemyloc", enemy_loc)
 
         #set initial values
         try:
-            if need_factory == 1:
+            if len(factories) < 1:
                 need_factory = worker_ai(gc, workers, factories, need_factory, home_loc)
         except:
             traceback.print_exc()
@@ -76,15 +73,18 @@ while True:
             traceback.print_exc()
 
         try:
-            if need_factory == 0:
+            if len(factories) > 0:
                 if len(workers) != 0:
-                    if len(workers) > 2:
+                    if len(workers) >= 2:
                         for worker in workers:
                             gather_k(gc, worker)
                     else:
-                        for worker in workers:
-                            if gc.can_replicate(worker.id, bc.Direction.North) == True:
-                                gc.replicate(worker.id, bc.Direction.North)
+                        try:
+                            for worker in workers:
+                                if gc.can_replicate(worker.id, bc.Direction.East) == True:
+                                    gc.replicate(worker.id, bc.Direction.East)
+                        except:
+                            traceback.print_exc()
         except:
             traceback.print_exc()
 

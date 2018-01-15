@@ -27,7 +27,6 @@ def make_factory_at(gc, worker, factory_location, need_factory):
         on = 1
         try:
             test_space = gc.sense_unit_at_location(fac_location)
-
             if test_space.unit_type is bc.UnitType.Factory:
                 if test_space.structure_is_built() == False:
                     on = 2
@@ -35,13 +34,13 @@ def make_factory_at(gc, worker, factory_location, need_factory):
                     return 0
         except:
             pass
+
     except:
         on = 1
         traceback.print_exc()
 
     if on == 1:
         try:
-            print("moving to:", factory_location)
             move_directly(gc, worker,factory_location)
         except:
             traceback.print_exc()
@@ -53,8 +52,6 @@ def make_factory_at(gc, worker, factory_location, need_factory):
             direction_to_go = location_of_unit.direction_to(factory_location)
             if direction_to_go is bc.Direction.Center:
                 if gc.team() is bc.Team.Red:
-                    print(worker.location)
-                    print("Laying Factory")
                     gc.blueprint(worker.id,bc.UnitType.Factory, bc.Direction.North)
                     fac_location = factory_location.add(bc.Direction.North)
                 else:
