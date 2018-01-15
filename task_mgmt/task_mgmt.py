@@ -47,8 +47,21 @@ class WorkerPool:
 # of task can have different constructors, different attributes (e.g.,
 # task-specific coordinates), and behave differently.
 class Task(ABC):
-    ''' '''
 
+    @abstractmethod
+    def execute(self, worker):
+        '''Run the instructions in this Task'''
+        pass
+
+    @abstractmethod
+    def is_done(self, worker):
+        '''Returns true when this task is complete. Normally true when the
+        task queue is empty, or possibly when a termination condition
+        is satisfied.'''
+        pass
+
+class CompoundTask(Task):
+    ''' '''
     def __init__(self):
         # Task_queue is a structure that consists of other tasks.
         # Tasks are executed until they are done, and then they are
@@ -56,7 +69,6 @@ class Task(ABC):
         self.task_queue = deque()
 
     def execute(self, worker):
-        '''Run the instructions in this Task'''
         # Processes the task queue 
         if task_queue:
             task = task_queue[0]
@@ -77,14 +89,8 @@ class Task(ABC):
         else:
             print('This task should have already been removed!')
 
-    def is_done(worker):
-        '''Returns true when this task is complete. Normally true when the
-        task queue is empty, or possibly when a termination condition
-        is satisfied.'''
-        return len(task_queue) == 0
-    
-class TaskQueue:
-    pass
+    def is_done(self, worker):
+        return len(self.task_queue) == 0
 
 class MoveTo(Task):
     
@@ -94,38 +100,20 @@ class MoveTo(Task):
         self.nav = navigator
 
     def execute(worker):
-        # try:
-        #     # TODO: handle cooldowns, etc (or should the navigator
-        #     #  handle this information... ?)
-            
-        #     self.nav.move_unit(worker.unit, location)
-            
-        # except LocationInaccessibleError:
-        #     print("Worker", worker.unit.id, "cannot reach location",
-        #           location, "!")
-        #     # TODO: reassign worker, add task to task pool
-        pass
-
-class BuildFactory(Task):
-
-    def do_build(worker):
-        make_factory_at(gc, worker.unit, self.location)
-
-    def __init__(self, location):
-        self.task_queue = []
-
-    def execute(worker):
-        pass
-
-class ExampleCompoundTask(Task):
-
-    def __init__(self, location, thing, other_thing):
-        self.task_queue = [MoveTo()]
-
-    def execute():
-        do_thing()
         
 
+    def is_done(worker):
+        return worker.location.map_location() == self.location
+
+class ExampleCompoundTask(CompoundTask):
+
+    def __init__(self, location, navigator):
+        super()
+        self.location = location
+        self.task_queue.extend([MoveTo(location, navigator),
+                                DoOtherThing()])
+        
+        
 # problem:
 # - the freeworker task is in the task queue
 # - tasks are executed when tasks should be executed, not when workers
