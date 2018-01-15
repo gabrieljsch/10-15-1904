@@ -18,12 +18,16 @@ def worker_ai(gc, workers, factories, need_factory, home_loc):
     try:
         if need_factory == 1:
             builder = workers[0]
-            if gc.team() is bc.Team.Red:
-                location_for_factory = make_location(gc, 1, 6)
-            else:
-                location_for_factory = make_location(gc, 19, 13)
-                
+            location_for_factory = home_loc
+
             need_factory = make_factory_at(gc, builder, location_for_factory, need_factory)
+            try:
+                for worker in workers:
+                    if worker is not workers[0]:
+                        gather_k(gc, worker)
+            except:
+                traceback.print_exc()
+
             return need_factory
     except:
         traceback.print_exc()

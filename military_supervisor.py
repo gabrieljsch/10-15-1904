@@ -5,8 +5,9 @@ import sys
 import traceback
 
 from move_directly import move_directly
+from move_random_after_block import move_random_after_block
 
-def military_supervisor(gc, soldiers, factories):
+def military_supervisor(gc, soldiers, factories, enemy_loc):
     """
     supervises military units. In this case,builds 7 rangers,lines them
     diagonally in front of the base, then charges accross the map and attacks
@@ -14,47 +15,47 @@ def military_supervisor(gc, soldiers, factories):
     imputs are gc, soldier list, and factory list
     """
 
+    if len(factories) == 0:
+        release_direction = bc.Direction.North
+    else:
+        fac_location = factories[0].location.map_location()
+        release_direction = fac_location.direction_to(enemy_loc)
+
 
     if gc.team() is bc.Team.Red:
         x = 10
         y = 4
-        release_direction = bc.Direction.North
         charge_direction = bc.Direction.Northeast
         oppo_team = bc.Team.Blue
+
+        barrier = .5
 
     else:
         x = 16
         y = 13
-        release_direction = bc.Direction.South
         charge_direction = bc.Direction.Southwest
         oppo_team = bc.Team.Red
 
+        barrier = .1
+
     #sets charge switch
-    if gc.round() <= 120:
+    if gc.round() <= 60:
         switch = 0
     else:
         switch = 1
 
+
     #if building up
     try:
-        if switch == 0:
-            #if we have any soldiers
-            if len(soldiers) > 1:
-                #enumerate soldiers
-                for i in range(len(soldiers)):
-                    #if soldier in garrison
-                    if soldiers[i].location.is_in_garrison() ==True:
-                        #try to pull him out
-                        if gc.can_unload(factories[0].id, release_direction)==True:
-                            gc.unload(factories[0].id, release_direction)
-                    # if already out
-                    if soldiers[i].location.is_in_garrison() ==False:
-                        try:
-                            #try to move him to the diagnol
-                            move_directly(gc, soldiers[i], bc.MapLocation(bc.Planet.Earth, x-i, y+i))
-
-                        except:
-                            traceback.print_exc()
+        #if we have any soldiers
+        if len(soldiers) > 1:
+            #enumerate soldiers
+            for i in range(len(soldiers)):
+                #if soldier in garrison
+                if soldiers[i].location.is_in_garrison() ==True:
+                    #try to pull him out
+                    if gc.can_unload(factories[0].id, release_direction)==True:
+                        gc.unload(factories[0].id, release_direction)
     except:
         traceback.print_exc()
 
@@ -64,7 +65,15 @@ def military_supervisor(gc, soldiers, factories):
             #for each soldier
             for soldier in soldiers:
                 #check if we see any enemies
-                units_near = gc.sense_nearby_units_by_team(soldier.location.map_location(), soldier.attack_range(), oppo_team)
+
+                try:
+                    if soldier.location.is_in_garrison() != True:
+                        units_near = gc.sense_nearby_units_by_team(soldier.location.map_location(), soldier.attack_range(), oppo_team)
+                    else:
+                        units_near = []
+                except:
+                    units_near = []
+                    traceback.print_exc()
                 #if we do
                 if len(units_near) != 0:
                     #try to attack then do
@@ -73,9 +82,22 @@ def military_supervisor(gc, soldiers, factories):
                             gc.attack(soldier.id, units_near[0].id)
                 #else continue charge
                 else:
-                    if gc.can_move(soldier.id, charge_direction) == True:
-                        if soldier.movement_heat() < 10:
-                            gc.move_robot(soldier.id, charge_direction)
+                    #sets var for random vs move toward
+                    barrier = .35
+                    if gc.is_move_ready(soldier.id) ==True:
+                        which_way = random.random()
+                        if which_way < barrier:
+                            if gc.can_move(soldier.id, release_direction)==True:
+                                gc.move_robot(soldier.id, release_direction)
+                            else:
+                                move_random_after_block(gc, soldier)
+
+                        if which_way >= 1.0-barrier:
+
+                            try:
+                                move_random_after_block(gc,soldier)
+                            except:
+                                traceback.print_exc()
 
     except:
         traceback.print_exc()

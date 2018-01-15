@@ -17,7 +17,7 @@ def split_robots(units):
     factories = []
 
     #does not include fighting units yet
-    
+
     try:
         if len(units) != 0:
             for i in range(len(units)):
@@ -27,6 +27,12 @@ def split_robots(units):
                 if unit.unit_type is bc.UnitType.Factory:
                     factories.append(unit)
                 if unit.unit_type is bc.UnitType.Ranger:
+                    soldiers.append(unit)
+                if unit.unit_type is bc.UnitType.Mage:
+                    soldiers.append(unit)
+                if unit.unit_type is bc.UnitType.Healer:
+                    soldiers.append(unit)
+                if unit.unit_type is bc.UnitType.Knight:
                     soldiers.append(unit)
 
     except:

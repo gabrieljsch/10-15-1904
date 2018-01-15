@@ -30,21 +30,42 @@ while True:
 
         if gc.round()%50 == 0:
             print("Round is:", gc.round())
-
+            print("Karbonite:", gc.karbonite())
+            print("Soldiers:", soldiers)
+            print("")
+            print("Factories", factories)
+            print("")
         #set home location
-        if gc.team() is bc.Team.Red:
-            home_loc = bc.MapLocation(bc.Planet.Earth, 1,1)
-        else:
-            home_loc = bc.MapLocation(bc.Planet.Earth, 19,19)
+
+
+
         #split units
         try:
             workers, soldiers, factories = split_robots(gc.my_units())
         except:
             traceback.print_exc()
 
+
+        #set home and enemy locations
+
+        if gc.round()==1:
+
+            home_loc = workers[0].location.map_location()
+
+            near_corner, far_corner = bc.MapLocation(bc.Planet.Earth, 1,1), bc.MapLocation(bc.Planet.Earth, 19,19)
+            if home_loc.distance_squared_to(near_corner) > home_loc.distance_squared_to(far_corner):
+                enemy_loc = near_corner
+                home_loc = home_loc.add(home_loc.direction_to(near_corner))
+            else:
+                enemy_loc = far_corner
+                home_loc = home_loc.add(home_loc.direction_to(far_corner))
+
+            print("HOMELOC:",home_loc)
+            print("enemyloc", enemy_loc)
+
         #set initial values
         try:
-            if need_factory ==1:
+            if need_factory == 1:
                 need_factory = worker_ai(gc, workers, factories, need_factory, home_loc)
         except:
             traceback.print_exc()
@@ -56,12 +77,19 @@ while True:
 
         try:
             if need_factory == 0:
-                gather_k(gc, workers[0])
+                if len(workers) != 0:
+                    if len(workers) > 2:
+                        for worker in workers:
+                            gather_k(gc, worker)
+                    else:
+                        for worker in workers:
+                            if gc.can_replicate(worker.id, bc.Direction.North) == True:
+                                gc.replicate(worker.id, bc.Direction.North)
         except:
             traceback.print_exc()
 
         try:
-            military_supervisor(gc, soldiers, factories)
+            military_supervisor(gc, soldiers, factories, enemy_loc)
         except:
             traceback.print_exc()
 

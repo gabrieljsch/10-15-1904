@@ -28,9 +28,9 @@ def move_directly(gc, unit,location_to_go):
             else:
                 try:
                     counter = 0
-                    new_dir = random.choice(bc.Direction)
+                    new_dir = random.choice(directions)
                     while gc.can_move(unit.id, new_dir) == False:
-                        new_dir = random.choice(bc.Direction)
+                        new_dir = random.choice(directions)
                         counter +=1
                         if counter >8:
                             print("cant move")

@@ -4,6 +4,7 @@ import random
 import sys
 import traceback
 
+from move_random_after_block import move_random_after_block
 def gather_k(gc, worker):
     """
     tells unit to gather karbonite, then move one square right
@@ -12,13 +13,12 @@ def gather_k(gc, worker):
 
     try:
         #if it can harvest do
-        if gc.can_harvest(worker.id, bc.Direction.East)==True:
-            gc.harvest(worker.id, bc.Direction.East)
+        if gc.can_harvest(worker.id, bc.Direction.North)==True:
+            gc.harvest(worker.id, bc.Direction.North)
         else:
             try:
                 #if it cant, can it move right. If so move
-                if gc.can_move(worker.id, bc.Direction.East):
-                    gc.move_robot(worker.id, bc.Direction.East)
+                move_random_after_block(gc, worker)
             except:
                 traceback.print_exc()
     except:
