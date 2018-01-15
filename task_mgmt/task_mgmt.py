@@ -19,12 +19,12 @@ class Worker:
         self.task = task
 
     def work(self):
-        if task is not None:
-            if task.is_done(self):
+        if self.task is not None:
+            if self.task.is_done(self):
                 self.free()
             else:
-                task.execute(self)
-                if task.is_done(self):
+                self.task.execute(self)
+                if self.task.is_done(self):
                     self.free()
         else:
             print("Worker", self.unit.id, "has no assigned task!")
@@ -108,25 +108,11 @@ class MoveTo(Task):
 class ExampleCompoundTask(CompoundTask):
 
     def __init__(self, location, navigator):
-        super()
         self.location = location
         self.task_queue.extend([MoveTo(location, navigator),
                                 DoOtherThing()])
         
         
-# problem:
-# - the freeworker task is in the task queue
-# - tasks are executed when tasks should be executed, not when workers
-# should be freed (which is immediately after they're finished).
-# - one way to solve this would be to check if the next task in the
-# queue is the FreeWorker task and then just do that in the queue
-# processing code
-
-                        
-
-# thought: how to handle completing and progressing subtasks?
-        
-
 # thought: what happens if an assigned worker can no longer complete
 # its assigned task (e.g., because it's blocked)?
 
