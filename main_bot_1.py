@@ -1,6 +1,7 @@
 import battlecode as bc
 import random
 import sys
+import os
 import traceback
 
 from move_directly import move_directly
@@ -11,24 +12,28 @@ from factory_supervisor import factory_supervisor
 from gather_k import gather_k
 from military_supervisor import military_supervisor
 
-print("pystarting")
+
+from task_mgmt import task_mgmt
+from tasks import harvest
+
+gc = bc.GameController()
+
 
 # A GameController is the main type that you talk to the game with.
 # Its constructor will connect to a running game.
-gc = bc.GameController()
+# gc = bc.GameController()
 directions = list(bc.Direction)
 
-print("pystarted")
-random.seed(6)
+# random.seed(6)
 
-need_factory = 1
+# need_factory = 1
 #Running bot
 while True:
 
     #only run earth and red team
     if gc.planet() is bc.Planet.Earth:
 
-        if gc.round()%50 == 0:
+        if gc.round() % 50 == 0:
             print("Round is:", gc.round())
 
         #set home location
@@ -42,28 +47,41 @@ while True:
         except:
             traceback.print_exc()
 
+        if gc.round() == 1:
+            worker_objects = set([task_mgmt.Worker(worker) for worker in workers])
+            for worker_o in worker_objects:
+                harvest_task = harvest.Harvest_then_build(worker_o)
+                worker_o.assign(harvest_task)
+                print('assigned',worker_o.unit.id)
+
+        for worker_object in worker_objects:
+                
+
+            if worker_object.task is not None:
+                worker_object.work()
+
         #set initial values
-        try:
-            if need_factory ==1:
-                need_factory = worker_ai(gc, workers, factories, need_factory, home_loc)
-        except:
-            traceback.print_exc()
+        # try:
+        #     if need_factory ==1:
+        #         need_factory = worker_ai(gc, workers, factories, need_factory, home_loc)
+        # except:
+        #     traceback.print_exc()
 
-        try:
-            factory_supervisor(gc,factories, soldiers)
-        except:
-            traceback.print_exc()
+        # try:
+        #     factory_supervisor(gc,factories, soldiers)
+        # except:
+        #     traceback.print_exc()
 
-        try:
-            if need_factory == 0:
-                gather_k(gc, workers[0])
-        except:
-            traceback.print_exc()
+        # try:
+        #     if need_factory == 0:
+        #         gather_k(gc, workers[0])
+        # except:
+        #     traceback.print_exc()
 
-        try:
-            military_supervisor(gc, soldiers, factories)
-        except:
-            traceback.print_exc()
+        # try:
+        #     military_supervisor(gc, soldiers, factories)
+        # except:
+        #     traceback.print_exc()
 
 
 

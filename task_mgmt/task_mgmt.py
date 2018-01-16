@@ -20,11 +20,11 @@ class Worker:
 
     def work(self):
         if self.task is not None:
-            if self.task.is_done(self):
+            if self.task.is_done():
                 self.free()
             else:
-                self.task.execute(self)
-                if self.task.is_done(self):
+                self.task.execute()
+                if self.task.is_done():
                     self.free()
         else:
             print("Worker", self.unit.id, "has no assigned task!")

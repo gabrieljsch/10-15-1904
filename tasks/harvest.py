@@ -1,8 +1,12 @@
 import battlecode as bc
+# from main_bot_1 import gc
+
+from task_mgmt import task_mgmt
+
 
 directions = list(bc.Direction)
 
-class Harvest_then_build(Task):
+class Harvest_then_build(task_mgmt.Task):
 
 	def __init__(self, worker):
 		self.mined = 0
