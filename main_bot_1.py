@@ -1,7 +1,6 @@
 import battlecode as bc
 import random
 import sys
-import os
 import traceback
 
 from move_directly import move_directly
@@ -13,6 +12,7 @@ from gather_k import gather_k
 from military_supervisor import military_supervisor
 
 
+# Template for importing files
 from task_mgmt import task_mgmt
 from tasks import harvest
 
@@ -26,12 +26,35 @@ directions = list(bc.Direction)
 
 # random.seed(6)
 
+#split units into respective groups
+try:
+    workers, soldiers, factories = split_robots(gc.my_units())
+except:
+    traceback.print_exc()
+
+# create array of worker objects to be mainupplated later
+worker_objects = set([task_mgmt.Worker(worker) for worker in workers])
+for worker_o in worker_objects:
+    harvest_task = harvest.Harvest_then_build(worker_o, gc)
+    worker_o.assign(harvest_task)
+    print('assigned',worker_o.unit.id)
+
 # need_factory = 1
 #Running bot
 while True:
 
+
+
+
     #only run earth and red team
     if gc.planet() is bc.Planet.Earth:
+
+
+        #split units into respective groups
+        try:
+            workers, soldiers, factories = split_robots(gc.my_units())
+        except:
+            traceback.print_exc()
 
         if gc.round() % 50 == 0:
             print("Round is:", gc.round())
@@ -41,22 +64,11 @@ while True:
             home_loc = bc.MapLocation(bc.Planet.Earth, 1,1)
         else:
             home_loc = bc.MapLocation(bc.Planet.Earth, 19,19)
-        #split units
-        try:
-            workers, soldiers, factories = split_robots(gc.my_units())
-        except:
-            traceback.print_exc()
+        
 
-        if gc.round() == 1:
-            worker_objects = set([task_mgmt.Worker(worker) for worker in workers])
-            for worker_o in worker_objects:
-                harvest_task = harvest.Harvest_then_build(worker_o)
-                worker_o.assign(harvest_task)
-                print('assigned',worker_o.unit.id)
 
         for worker_object in worker_objects:
-                
-
+            
             if worker_object.task is not None:
                 worker_object.work()
 

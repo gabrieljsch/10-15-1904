@@ -4,6 +4,8 @@ from collections import deque
 # This is a way to create new tasks and assign them to workers.
 # A higher level strategic AI should generate and prioritize these tasks.
 
+
+
 class Worker:
     '''Workers are assigned tasks and perform them to completion or
     until interrupted.'''
