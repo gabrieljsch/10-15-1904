@@ -3,6 +3,11 @@ import battlecode as bc
 import random
 import sys
 import traceback
+
+
+#import functions
+from on_first_turn import on_first_turn
+
 # hardcode some tasks assigned to workers:
 task1 = ExampleTask(a, b, c)
 worker1 = Worker(example_unit)
@@ -30,7 +35,11 @@ while True:
 
     #run on turn one init
     if gc.round() == 1:
-        
+        on_first_turn(gc)
+
+
+
+
 
     for worker in workers:
         worker.work()

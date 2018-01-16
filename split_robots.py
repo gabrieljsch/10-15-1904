@@ -3,6 +3,7 @@ import random
 import sys
 import traceback
 
+import task_mgmt as tm
 
 def split_robots(units):
     """
@@ -23,6 +24,7 @@ def split_robots(units):
             for i in range(len(units)):
                 unit = units[i]
                 if unit.unit_type is bc.UnitType.Worker:
+                    tm.Worker(unit)
                     workers.append(unit)
                 if unit.unit_type is bc.UnitType.Factory:
                     if unit.structure_is_built() == True:

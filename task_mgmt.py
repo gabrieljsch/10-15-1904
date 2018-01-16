@@ -38,7 +38,7 @@ class WorkerPool:
     # TODO: Give a way to automatically shuffle workers when
     # reprioritizing tasks
     pass
-    
+
 # note for Gabe and Kyle: This class is an "abstract class", which
 # means it cannot be instantiated directly and is therefore only for
 # subclassing from. In effect, any object that inherits from Task can
@@ -65,15 +65,15 @@ class CompoundTask(Task):
     def __init__(self):
         # Task_queue is a structure that consists of other tasks.
         # Tasks are executed until they are done, and then they are
-        # removed from the task_queue. 
+        # removed from the task_queue.
         self.task_queue = deque()
 
     def execute(self, worker):
-        # Processes the task queue 
+        # Processes the task queue
         if task_queue:
             task = task_queue[0]
             task.execute(worker)
-            
+
             if task.is_done(worker):
                 # clear any completed tasks and clean up if we're
                 # completely done
@@ -83,7 +83,7 @@ class CompoundTask(Task):
                     # remove this task if it's done
                     if task.is_done(worker):
                         # remove the task from the task_queue
-                        task_queue.popleft()                
+                        task_queue.popleft()
                     else:
                         break
         else:
@@ -93,7 +93,7 @@ class CompoundTask(Task):
         return len(self.task_queue) == 0
 
 class MoveTo(Task):
-    
+
     def __init__(self, location, navigator):
         '''Takes a MapLocation and the instance of Navigator'''
         self.loc = location
@@ -112,8 +112,8 @@ class ExampleCompoundTask(CompoundTask):
         self.location = location
         self.task_queue.extend([MoveTo(location, navigator),
                                 DoOtherThing()])
-        
-        
+
+
 # problem:
 # - the freeworker task is in the task queue
 # - tasks are executed when tasks should be executed, not when workers
@@ -122,10 +122,10 @@ class ExampleCompoundTask(CompoundTask):
 # queue is the FreeWorker task and then just do that in the queue
 # processing code
 
-                        
+
 
 # thought: how to handle completing and progressing subtasks?
-        
+
 
 # thought: what happens if an assigned worker can no longer complete
 # its assigned task (e.g., because it's blocked)?
