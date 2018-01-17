@@ -4,6 +4,8 @@ from collections import deque
 # This is a way to create new tasks and assign them to workers.
 # A higher level strategic AI should generate and prioritize these tasks.
 
+
+
 class Worker:
     '''Workers are assigned tasks and perform them to completion or
     until interrupted.'''
@@ -20,11 +22,11 @@ class Worker:
 
     def work(self):
         if self.task is not None:
-            if self.task.is_done(self):
+            if self.task.is_done():
                 self.free()
             else:
-                self.task.execute(self)
-                if self.task.is_done(self):
+                self.task.execute()
+                if self.task.is_done():
                     self.free()
         else:
             print("Worker", self.unit.id, "has no assigned task!")
