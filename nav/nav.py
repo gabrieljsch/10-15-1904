@@ -1,7 +1,7 @@
 from collections import namedtuple
 import heapq
 
-from ..battlecode import Direction
+from battlecode import Direction
 
 # high level overview:
 #  - use a pathfinding algo as a black box
@@ -206,5 +206,3 @@ class Navigator:
 # to decentralized control (like bug nav in an availability-first
 # order) if it falls below a given threshold. Would prevent failures
 # in pathfinding algorithm from screwing us.
-
-print('ran')

@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from nav import Navigator
-from ..battlecode import Direction
+from battlecode import Direction
 
 # Mocks
 Location = namedtuple('Location', ['x', 'y'])
