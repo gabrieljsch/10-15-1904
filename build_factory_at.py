@@ -7,33 +7,29 @@ import traceback
 from move_directly import move_directly
 
 
-def build_factory_at(gc, worker, location_of_factory):
+def build_factory_at(gc, worker, fac_location):
     """
     Subfunction of make_factory, uses a worker to build up factory
     after blueprint is laid
 
-    input on is odd and hacky, basically comes in as 2 and stays 2 unit structure is
-    built, at which point it returns as 2
     """
     #get the blueprint just laid
-    try:
-        blueprint = gc.sense_unit_at_location(location_of_factory)
 
-    except:
-        traceback.print_exc()
+    if gc.can_sense_location(fac_location) == True:
+        if gc.has_unit_at_location(fac_location) ==True:
+            try:
+                blueprint = gc.sense_unit_at_location(fac_location)
 
-    #try to build on blueprint
-    try:
-        if gc.can_build(worker.id, blueprint.id):
-            #if not fully built
-            if blueprint.structure_is_built() == False:
-                #build
-                gc.build(worker.id, blueprint.id)
+            except:
+                traceback.print_exc()
 
-        #if built, indicate by returing 0
-        if blueprint.structure_is_built() == True:
-        
-            return
-
-    except:
-        traceback.print_exc()
+            #try to build on blueprint
+            try:
+                if gc.can_build(worker.id, blueprint.id):
+                    #if not fully built
+                    if blueprint.structure_is_built() == False:
+                        #build
+                        gc.build(worker.id, blueprint.id)
+                        
+            except:
+                traceback.print_exc()

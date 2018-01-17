@@ -16,7 +16,7 @@ def make_factory_at(gc, unit, factory_location, enemy_dir):
 
     factory location is maplocation
     """
-
+    
     #sets factory location one above given coords
     builder_location = factory_location.clone()
     fac_location = factory_location.add(enemy_dir)
@@ -34,6 +34,6 @@ def make_factory_at(gc, unit, factory_location, enemy_dir):
 
     else:
         try:
-            move_directly(gc, unit,factory_location)
+            move_directly(gc, unit,builder_location)
         except:
             traceback.print_exc()

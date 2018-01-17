@@ -10,6 +10,8 @@ from worker_ai import worker_ai
 from factory_supervisor import factory_supervisor
 from gather_k import gather_k
 from military_supervisor import military_supervisor
+from find_home_loc import find_home_loc
+from set_enemy_dir import set_enemy_dir
 
 print("pystarting")
 
@@ -18,27 +20,39 @@ print("pystarting")
 gc = bc.GameController()
 directions = list(bc.Direction)
 
+
 print("pystarted")
-random.seed(8)
+random.seed(12)
+
 
 #Running bot
 while True:
 
     #only run earth and red team
     if gc.planet() is bc.Planet.Earth:
-
-
-
-
         #queue research
         gc.queue_research(bc.UnitType.Ranger)
         # if gc.round()%50 == 0:
         #     print("Factories", factories)
 
 
+
+
+        # if gc.round()%20 == 0:
+        #     print("Round:", gc.round())
+        #     print("attack_dir", attack_dir)
+        #     print("Time left:", gc.get_time_left_ms())
+
+
         if gc.round() == 100:
             workers_needed = 3
             factories_needed = 2
+
+        if gc.round() > 300:
+            if gc.round()%50 == 0:
+                rand_d= random.choice(directions)
+                if rand_d != bc.Direction.Center:
+                    attack_dir = rand_d
         #split units
         try:
             workers, soldiers, factories = split_robots(gc.my_units())
@@ -58,24 +72,23 @@ while True:
                     test_location = bc.MapLocation(bc.Planet.Earth,x,y)
                     if earth_map.initial_karbonite_at(test_location) > 0:
                         started_with_karbonite.append(test_location)
-        
 
+            attack_dir = None
+            breaker = 0
+
+
+            #set workers needed and factories needed
             workers_needed = 1
             factories_needed = 1
-            #home is location of our worker
+            #home is location of our worker initially
             new_loc = workers[0].location.map_location()
-            home_loc = new_loc.clone()
-            #set locations for neart and far corner
-            near_corner, far_corner = bc.MapLocation(bc.Planet.Earth, 1,1), bc.MapLocation(bc.Planet.Earth, 19,19)
-            #corner we are furthur from is enemy corner
-            #also move our home one closer to enemy
-            if home_loc.distance_squared_to(near_corner) > home_loc.distance_squared_to(far_corner):
-                enemy_loc = near_corner
-            else:
-                enemy_loc = far_corner
+            #find enemy direction
+            enemy_dir = set_enemy_dir(gc, new_loc)
+            #then set spaced out home
+            home_loc = find_home_loc(gc, new_loc, enemy_dir)
 
-            enemy_dir = home_loc.direction_to(enemy_loc)
-                #set initial values
+            #set enemy direction
+
 
         try:
             if len(factories) < factories_needed:
@@ -97,15 +110,27 @@ while True:
                     else:
                         try:
                             for worker in workers:
-                                if gc.can_replicate(worker.id, bc.Direction.East) == True:
-                                    gc.replicate(worker.id, bc.Direction.East)
+                                for direction in directions:
+                                    if gc.can_replicate(worker.id, direction) == True:
+                                        gc.replicate(worker.id, direction)
+
                         except:
                             traceback.print_exc()
         except:
             traceback.print_exc()
 
         try:
-            military_supervisor(gc, soldiers, factories, enemy_loc, home_loc)
+            full_unit_seen_list = military_supervisor(gc, soldiers, factories, enemy_dir, home_loc, attack_dir)
+            #look into factories#
+            #TODO move out of main
+            if breaker == 0:
+                if full_unit_seen_list != None:
+                    if len(full_unit_seen_list) != 0:
+                        for enemy in full_unit_seen_list:
+                            if enemy.unit_type == bc.UnitType.Factory:
+                                attack_dir = home_loc.direction_to(enemy.location.map_location())
+                                breaker = 1
+
         except:
             traceback.print_exc()
 

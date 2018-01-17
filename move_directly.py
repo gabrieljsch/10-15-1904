@@ -21,7 +21,7 @@ def move_directly(gc, unit,location_to_go):
     directions = list(bc.Direction)
 
     #check cooldown
-    if unit.movement_heat() < 10:
+    if gc.is_move_ready(unit.id)== True:
     #move robot
         try:
             if gc.can_move(unit.id,direction_to_go) == True:
