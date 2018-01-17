@@ -18,21 +18,12 @@ def split_robots(units):
 
     #does not include fighting units yet
     
-    try:
-        if len(units) != 0:
-            for i in range(len(units)):
-                unit = units[i]
-                if unit.unit_type is bc.UnitType.Worker:
-                    workers.append(unit)
-                if unit.unit_type is bc.UnitType.Factory:
-                    factories.append(unit)
-                if unit.unit_type is bc.UnitType.Ranger:
-                    soldiers.append(unit)
-
-    except:
-        traceback.print_exc()
-
-
-
+    for unit in units:
+        if unit.unit_type is bc.UnitType.Worker:
+            workers.append(unit)
+        if unit.unit_type is bc.UnitType.Factory:
+            factories.append(unit)
+        if unit.unit_type is bc.UnitType.Ranger:
+            soldiers.append(unit)
 
     return workers, soldiers, factories

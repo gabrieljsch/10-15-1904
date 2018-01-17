@@ -35,65 +35,28 @@ except:
 # create array of worker objects to be mainupplated later
 worker_objects = set([task_mgmt.Worker(worker) for worker in workers])
 for worker_o in worker_objects:
-    harvest_task = harvest.Harvest_then_build(worker_o, gc)
-    worker_o.assign(harvest_task)
-    print('assigned',worker_o.unit.id)
+    worker_o.assign(harvest.Harvest_then_build(worker_o, gc))
+    print('assigned:',worker_o.unit.id)
 
-# need_factory = 1
 #Running bot
 while True:
 
-
-
-
-    #only run earth and red team
+    #only run earth
     if gc.planet() is bc.Planet.Earth:
 
 
-        #split units into respective groups
-        try:
-            workers, soldiers, factories = split_robots(gc.my_units())
-        except:
-            traceback.print_exc()
+        # split units into respective groups
+        workers, soldiers, factories = split_robots(gc.my_units())
+
 
         if gc.round() % 50 == 0:
             print("Round is:", gc.round())
-
-        #set home location
-        if gc.team() is bc.Team.Red:
-            home_loc = bc.MapLocation(bc.Planet.Earth, 1,1)
-        else:
-            home_loc = bc.MapLocation(bc.Planet.Earth, 19,19)
         
-
 
         for worker_object in worker_objects:
             
             if worker_object.task is not None:
                 worker_object.work()
-
-        #set initial values
-        # try:
-        #     if need_factory ==1:
-        #         need_factory = worker_ai(gc, workers, factories, need_factory, home_loc)
-        # except:
-        #     traceback.print_exc()
-
-        # try:
-        #     factory_supervisor(gc,factories, soldiers)
-        # except:
-        #     traceback.print_exc()
-
-        # try:
-        #     if need_factory == 0:
-        #         gather_k(gc, workers[0])
-        # except:
-        #     traceback.print_exc()
-
-        # try:
-        #     military_supervisor(gc, soldiers, factories)
-        # except:
-        #     traceback.print_exc()
 
 
 
