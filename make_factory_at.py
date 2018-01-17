@@ -3,82 +3,60 @@ import battlecode as bc
 import random
 import traceback
 
+from task_mgmt import task_mgmt
+
 from move_directly import move_directly
 from build_factory_at import build_factory_at
 
+class Make_factory_at(task_mgmt.Task):
+
+    def __init__(self, gc, unit_object, factory_location, enemy_dir):
+        self.gc = gc
+        self.unit_object = unit_object
+        self.unit = unit_object.unit
+        self.factory_location = factory_location
+        self.enemy_dir = enemy_dir
+        self.factory_built = False
+
+    def execute(self):
+        builder_location = self.factory_location.clone()
+        fac_location = self.factory_location.add(self.enemy_dir)
+        #tests if unit at test space
+
+        location_of_unit = self.unit.location.map_location()
+
+        if location_of_unit.direction_to(builder_location) is bc.Direction.Center:
+            #at location
+            if self.gc.can_blueprint(self.unit.id, bc.UnitType.Factory, self.enemy_dir):
+                self.gc.blueprint(self.unit.id, bc.UnitType.Factory, self.enemy_dir)
+
+            else:
+                build_factory_at(self.gc, self.unit, fac_location)
+
+            if self.gc.can_sense_location(fac_location) == True:
+                if self.gc.has_unit_at_location(fac_location) ==True:
+                    try:
+                        blueprint = self.gc.sense_unit_at_location(fac_location)
+            
+                        if blueprint.structure_is_built() == True:
+                            print("built it")
+                            print("blueprint",blueprint)
+                            self.factory_built = True
+                    except:
+                        traceback.print_exc()
 
 
-def make_factory_at(gc, worker, factory_location, need_factory):
-    """
-    gc is game console
-
-    worker is a unit
-
-    factory location is maplocation
-    """
-
-    #sets factory location one above given coords
-    if gc.team() is bc.Team.Red:
-        fac_location = factory_location.add(bc.Direction.North)
-    else:
-        fac_location = factory_location.add(bc.Direction.South)
-
-    #tests if unit at test space
-    try:
-        on = 1
-        try:
-            test_space = gc.sense_unit_at_location(fac_location)
-
-            if test_space.unit_type is bc.UnitType.Factory:
-                if test_space.structure_is_built() == False:
-                    on = 2
-                if test_space.structure_is_built() == True:
-                    return 0
-        except:
-            pass
-    except:
-        on = 1
-        traceback.print_exc()
-
-    if on == 1:
-        try:
-            move_directly(gc, worker,factory_location)
-        except:
-            traceback.print_exc()
-
-        try:
-            unit = worker
-            location_of_unit = unit.location.map_location()
-
-            direction_to_go = location_of_unit.direction_to(factory_location)
-            if direction_to_go is bc.Direction.Center:
-                if gc.team() is bc.Team.Red:
-                    gc.blueprint(worker.id,bc.UnitType.Factory, bc.Direction.North)
-                    fac_location = factory_location.add(bc.Direction.North)
-                else:
-                    gc.blueprint(worker.id, bc.UnitType.Factory, bc.Direction.South)
-                    fac_location = factory_location.add(bc.Direction.South)
-
-                should_be_fac = gc.sense_unit_at_location(fac_location)
-                if should_be_fac.unit_type == bc.UnitType.Factory:
-                    return 1
-
-        except:
-            traceback.print_exc()
+        else:
+            try:
+                move_directly(self.gc, self.unit, builder_location)
+            except:
+                traceback.print_exc()
 
 
-    if on == 2:
-        done = build_factory_at(gc, worker, fac_location,on)
-        try:
-            blueprint = gc.sense_unit_at_location(fac_location)
-            if blueprint.structure_is_built() == True:
-                done = 0
-        except:
-            pass
-
-        if done == 0:
-            need_factory = 0
-            return need_factory
 
 
-    return need_factory
+        #sets factory location one above given coords
+
+
+    def is_done(self):
+        return self.factory_built

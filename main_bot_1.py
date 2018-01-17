@@ -4,10 +4,10 @@ import sys
 import traceback
 
 from move_directly import move_directly
-from make_factory_at import make_factory_at
+from make_factory_at import Make_factory_at
 from split_robots import split_robots
 from worker_ai import worker_ai
-from factory_supervisor import factory_supervisor
+from factory_supervisor import Factory_supervisor
 from gather_k import Gather_k
 from military_supervisor import military_supervisor
 from set_enemy_dir import set_enemy_dir
@@ -29,17 +29,6 @@ directions = list(bc.Direction)
 
 # random.seed(6)
 
-#split units into respective groups
-# try:
-#     workers, soldiers, factories = split_robots(gc.my_units())
-# except:
-#     traceback.print_exc()
-
-# create array of worker objects to be mainupplated later
-# worker_objects = set([task_mgmt.Worker(worker) for worker in workers])
-# for worker_o in worker_objects:
-#     worker_o.assign(harvest.Harvest_then_build(worker_o, gc))
-#     print('assigned:',worker_o.unit.id)
 
 #make worker object lists
 worker_objects = []
@@ -51,7 +40,8 @@ soldier_objects = []
 ##All info for kyle's helper functions
 if gc.planet() is bc.Planet.Earth:
     started_with_karbonite, attack_dir, breaker, workers_needed, factories_needed, enemy_dir, home_loc = on_turn_one(gc)
-#set home_loc and enemy_dir
+
+
 #Running bot
 while True:
 
@@ -60,22 +50,53 @@ while True:
 
 
         # split units into respective groups
-        worker_objects, factory_objects, soldier_objects,  = split_robots(gc.my_units(), worker_objects, factory_objects, soldier_objects)
+        worker_objects, factory_objects, soldier_objects  = split_robots(gc.my_units(), worker_objects, factory_objects, soldier_objects, gc)
+        all_objects = worker_objects+ factory_objects+ soldier_objects
+
+        #worker controls
+        if len(worker_objects) > workers_needed:
+            if len(factory_objects) < factories_needed:
+                builder = worker_objects[0]
+                if builder.task is None:
+                    print('assigned:',builder.unit.id)
+                    builder.assign(Make_factory_at(gc, builder,home_loc, enemy_dir))
+            else:
+                if builder.task is None:
+                    builder.assign(Gather_k(gc, builder, started_with_karbonite, home_loc))
 
         if gc.round() == 1:
             for worker_o in worker_objects:
-                worker_o.assign(harvest.Harvest_then_build(worker_o, gc, factory_objects))
-                print('assigned:',worker_o.unit.id)
+                if worker_o.task is None:
+                    worker_o.assign(Gather_k(gc, worker_o, started_with_karbonite, home_loc))
 
+        #factory_controls
+        if len(factory_objects) !=0:
+            for factory in factory_objects:
+                if factory.task is None:
+                    factory.assign(Factory_supervisor(gc, factory, soldier_objects, worker_objects))
+
+
+        #soldier controllers
+        if len(soldier_objects) > 0:
+            print("soldiers", soldier_objects)
+            soldier_objects = military_supervisor(gc, soldier_objects, factory_objects, enemy_dir, home_loc, attack_dir)
+
+
+
+
+
+
+
+        #check printng loop
         if gc.round() % 50 == 0:
             print("Round is:", gc.round())
-
-
-
+            print("worker objects", worker_objects)
+            print("starting carb", started_with_karbonite)
 
         #main worker loop
-        for worker_object in worker_objects:
+        for worker_object in all_objects:
             if worker_object.task is not None:
+                print("working")
                 worker_object.work()
 
 

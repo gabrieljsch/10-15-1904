@@ -42,7 +42,8 @@ class Harvest_then_build(task_mgmt.Task):
 						print("BLUEPRINTED!!!!", self.worker.unit.id)
 						return
 			else:
-				for factory.unit in self.factories:
+				for factory in self.factories:
+					factory = factory.unit
 					if self.worker.unit.location.is_adjacent_to(factory.location):
 						if self.gc.can_build(self.worker.unit.id, factory.id):
 							if factory.structure_is_built:

@@ -16,13 +16,10 @@ class Gather_k(task_mgmt.Task):
         self.home_loc = home_loc
         self.worker_object = worker_object
         self.worker = worker_object.unit
-        self.can_gather = True
-
-
-
+        self.done_gathering = False
+        
     def execute(self):
         directions = list(bc.Direction)
-
         if len(self.started_with_karbonite) != 0:
             try:
                 first_go = self.started_with_karbonite[0]
@@ -33,7 +30,7 @@ class Gather_k(task_mgmt.Task):
                     #also remove blank squares?
                     if self.gc.can_sense_location(location) == True:
                         if self.gc.karbonite_at(location) < 1:
-                            started_with_karbonite.remove(location)
+                            self.started_with_karbonite.remove(location)
 
                 #if it can harvest do
                 if self.gc.can_harvest(self.worker.id, bc.Direction.Center)==True:
@@ -53,4 +50,4 @@ class Gather_k(task_mgmt.Task):
                 traceback.print_exc()
 
     def is_done(self):
-        return self.can_gather
+        return self.done_gathering
