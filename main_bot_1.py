@@ -8,14 +8,17 @@ from make_factory_at import make_factory_at
 from split_robots import split_robots
 from worker_ai import worker_ai
 from factory_supervisor import factory_supervisor
-from gather_k import gather_k
+from gather_k import Gather_k
 from military_supervisor import military_supervisor
-
+from set_enemy_dir import set_enemy_dir
+from find_home_loc import find_home_loc
+from on_turn_one import on_turn_one
 
 # Template for importing files
 from task_mgmt import task_mgmt
 from tasks import harvest
 
+print("running")
 gc = bc.GameController()
 
 
@@ -46,31 +49,9 @@ soldier_objects = []
 
 
 ##All info for kyle's helper functions
+if gc.planet() is bc.Planet.Earth:
+    started_with_karbonite, attack_dir, breaker, workers_needed, factories_needed, enemy_dir, home_loc = on_turn_one(gc)
 #set home_loc and enemy_dir
-earth_map = gc.starting_map(bc.Planet.Earth)
-x, y = earth_map.width, earth_map.height
-started_with_karbonite = []
-for x in range(x):
-    for y in range(y):
-        test_location = bc.MapLocation(bc.Planet.Earth,x,y)
-        if earth_map.initial_karbonite_at(test_location) > 0:
-            started_with_karbonite.append(test_location)
-
-attack_dir = None
-breaker = 0
-
-#set workers needed and factories needed
-workers_needed = 1
-factories_needed = 1
-#home is location of our worker initially
-new_loc = gc.my_units()[0].location.map_location()
-#find enemy direction
-enemy_dir = set_enemy_dir(gc, new_loc)
-#then set spaced out home
-home_loc = find_home_loc(gc, new_loc, enemy_dir)
-
-#set enemy direction
-
 #Running bot
 while True:
 
