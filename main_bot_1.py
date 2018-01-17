@@ -27,16 +27,49 @@ directions = list(bc.Direction)
 # random.seed(6)
 
 #split units into respective groups
-try:
-    workers, soldiers, factories = split_robots(gc.my_units())
-except:
-    traceback.print_exc()
+# try:
+#     workers, soldiers, factories = split_robots(gc.my_units())
+# except:
+#     traceback.print_exc()
 
 # create array of worker objects to be mainupplated later
-worker_objects = set([task_mgmt.Worker(worker) for worker in workers])
-for worker_o in worker_objects:
-    worker_o.assign(harvest.Harvest_then_build(worker_o, gc))
-    print('assigned:',worker_o.unit.id)
+# worker_objects = set([task_mgmt.Worker(worker) for worker in workers])
+# for worker_o in worker_objects:
+#     worker_o.assign(harvest.Harvest_then_build(worker_o, gc))
+#     print('assigned:',worker_o.unit.id)
+
+#make worker object lists
+worker_objects = []
+factory_objects = []
+soldier_objects = []
+
+
+
+##All info for kyle's helper functions
+#set home_loc and enemy_dir
+earth_map = gc.starting_map(bc.Planet.Earth)
+x, y = earth_map.width, earth_map.height
+started_with_karbonite = []
+for x in range(x):
+    for y in range(y):
+        test_location = bc.MapLocation(bc.Planet.Earth,x,y)
+        if earth_map.initial_karbonite_at(test_location) > 0:
+            started_with_karbonite.append(test_location)
+
+attack_dir = None
+breaker = 0
+
+#set workers needed and factories needed
+workers_needed = 1
+factories_needed = 1
+#home is location of our worker initially
+new_loc = gc.my_units()[0].location.map_location()
+#find enemy direction
+enemy_dir = set_enemy_dir(gc, new_loc)
+#then set spaced out home
+home_loc = find_home_loc(gc, new_loc, enemy_dir)
+
+#set enemy direction
 
 #Running bot
 while True:
@@ -46,17 +79,24 @@ while True:
 
 
         # split units into respective groups
-        workers, soldiers, factories = split_robots(gc.my_units())
+        worker_objects, factory_objects, soldier_objects,  = split_robots(gc.my_units(), worker_objects, factory_objects, soldier_objects)
 
+        if gc.round() == 1:
+            for worker_o in worker_objects:
+                worker_o.assign(harvest.Harvest_then_build(worker_o, gc, factory_objects))
+                print('assigned:',worker_o.unit.id)
 
         if gc.round() % 50 == 0:
             print("Round is:", gc.round())
-        
 
+
+
+
+        #main worker loop
         for worker_object in worker_objects:
-            
             if worker_object.task is not None:
                 worker_object.work()
+
 
 
 
