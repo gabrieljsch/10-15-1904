@@ -1,4 +1,7 @@
+from collections import namedtuple
 import heapq
+
+from ..battlecode import Direction
 
 # high level overview:
 #  - use a pathfinding algo as a black box
@@ -29,11 +32,13 @@ def a_star_search(graph, start, goal):
     cost_so_far = {}
     came_from[start] = None
     cost_so_far[start] = 0
+    final_node = None
     
     while not frontier.empty():
         current = frontier.get()
         
         if graph.success(current, goal):
+            final_node = current
             break
         
         for next in graph.neighbors(current):
@@ -44,10 +49,10 @@ def a_star_search(graph, start, goal):
                 frontier.put(next, priority)
                 came_from[next] = current
     
-    return came_from, cost_so_far
+    return came_from, final_node #, cost_so_far
 
-def reconstruct_path(came_from, start, goal):
-    current = goal
+def reconstruct_path(came_from, start, end):
+    current = end
     path = []
     while current != start:
         path.append(current)
@@ -57,8 +62,7 @@ def reconstruct_path(came_from, start, goal):
     return path
 
 ### Graph Implementation ###################################
-
-SearchNode = namedTuple('SearchNode', ['location', 'turn', 'unit', 'heat'])
+SearchNode = namedtuple('SearchNode', ['location', 'turn', 'unit', 'heat'])
 
 class SearchGraph():
 
@@ -68,7 +72,7 @@ class SearchGraph():
         self.occupations = {} # turn to set of occupied (x, y) tuple
                               # locations
 
-    def neighbors(node):
+    def neighbors(self, node):
         dont_move = SearchNode(node.location, node.turn+1, node.unit,
                                max(node.heat - 10, 0))
         # unit can move:
@@ -84,14 +88,14 @@ class SearchGraph():
             moves = [SearchNode(node.location.add(d),
                                 node.turn + 1,
                                 node.unit,
-                                node.heat + node.unit.movement_cooldown())
+                                node.heat + node.unit.movement_cooldown() - 10)
                      for d in directions
                      if self.__is_clear(node)]
             return moves + [dont_move]
         else:
             return [dont_move]
 
-    def __is_clear(node):
+    def __is_clear(self, node):
         '''True iff the given node is not occupied by another unit.'''
         def check_location(location):
             if self.gc.is_occupiable(node.location):
@@ -109,7 +113,7 @@ class SearchGraph():
                 and ((node.location.x, node.location.y) not in
                      self.occupations[node.turn]))
 
-    def add_route(route):
+    def add_route(self, route):
         for node in route:
             if not self.occupations[node.turn]:
                 self.occupations[node.turn] = set()
@@ -121,26 +125,39 @@ class SearchGraph():
                 print("Routed through an occupied tile!",
                       "Something's wrong with pathfinding.")
 
-    def clear_route(route):
+    def clear_route(self, route):
         for node in route:
             self.occupations[node.turn].remove((node.location.x, node.location.y))
 
-    def cost(node1, node2):
+    def cost(self, node1, node2):
         return node2.turn - node1.turn
 
-    def heuristic(node1, node2):
+    def heuristic(self, node1, node2):
         x1 = node1.location.x
         y1 = node1.location.y
         x2 = node2.location.x
         y2 = node2.location.y
         return abs(x1 - x2) + abs(y1 - y2)
 
-    def success(node, goal):
-        return (node.location.x == goal.location.x and
-                node.location.y == goal.location.y)
+    def success(self, node, goal):
+        # TODO
+        true_success = (node.location.x == goal.x and
+                        node.location.y == goal.y)
+        if true_success:
+            return true
+        else:
+            #if not self.__is_clear(go)
+            #if not self.gc.is_occupiable(goal.location):
+            return False
 
 ### Navigation Logic #######################################
-    
+# different states a unit could be in:
+#  - not traveling (e.g., working, guarding, etc.)
+#  - traveling
+#  - trying to travel but can't find route:
+#     - can get close but not all the way
+#     - is stuck or blocked
+
 class Navigator:
 
     # Overview of process:
@@ -150,24 +167,44 @@ class Navigator:
     
     def __init__(self, gc):
         self.gc = gc
-        self.searchGraph = SearchGraph(gc, self)
+        self.graph = SearchGraph(gc, self)
         # track all units bc they are impassable
         self.units = []
         # track units that are moving and their routes
         self.traveling_units = {}
         
-    def direct_unit(unit, destination):
+    def direct_unit(self, unit_id, destination):
         '''Move unit to destination over a number of turns.'''
-        self.traveling_units[unit.id] = None # TODO
-        self.units.append(unit.id)
+        self.traveling_units[unit_id] = self.__find_route(unit_id, destination)
+        self.units.append(unit_id)
 
-    def free_unit(unit):
-        del self.traveling_units[unit.id]
+    def free_unit(self, unit_id):
+        del self.traveling_units[unit_id]
 
-    def move_units():
+    def move_units(self):
         '''Moves all units towards their destinations.'''
-        units_to_move = [u for u in self.traveling_units if u.is_move_ready()]
-        pass
+        units_to_move = [u for u in self.traveling_units
+                         if self.gc.unit(u).is_move_ready()]
+        # figure out which units can and can't move, 
+        self.traveling_units = None
+
+    # probably only useful for testing
+    def still_navigating(self):
+        return not self.traveling_units
+    
+    def __find_route(self, unit_id, destination):
+        unit = self.gc.unit(unit_id)
+        start_loc = unit.location
+        start = SearchNode(start_loc, self.gc.round(), unit_id, unit.movement_heat())
+        goal = destination
+        came_from = a_star_search(self.graph, start, goal)
+        path = reconstruct_path(came_from, start, end)
+        print(path)
         
-    def __route_unit(unit):
-        
+### Backup Navigation ######################################
+# TODO Idea is to keep track of total movement of units and fall back
+# to decentralized control (like bug nav in an availability-first
+# order) if it falls below a given threshold. Would prevent failures
+# in pathfinding algorithm from screwing us.
+
+print('ran')
