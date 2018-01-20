@@ -24,7 +24,6 @@ class PriorityQueue:
     
     def get(self):
         el = heapq.heappop(self.elements)
-        
         return el[1]
 
 def a_star_search(graph, start, goal):
@@ -40,41 +39,18 @@ def a_star_search(graph, start, goal):
     #        for el in frontier.elements])
     while not frontier.empty():
         current = frontier.get()
-        # print('popped:', current)
-        # print(current.turn)
         
         if graph.success(current, goal):
             final_node = current
             break
 
-        new_elements = []
-
-
-        neighbors = graph.neighbors(current)
-        # print('neighbors:', neighbors)
-        for next in neighbors:
+        for next in graph.neighbors(current):
             new_cost = cost_so_far[current] + graph.cost(current, next)
             if next not in cost_so_far or new_cost < cost_so_far[next]:
                 cost_so_far[next] = new_cost
                 priority = new_cost + graph.heuristic(goal, next)
-                # print(priority, '=', new_cost, '+', graph.heuristic(goal, next))
                 frontier.put(next, priority)
-                new_elements.append((priority, next))
                 came_from[next] = current
-            # else:
-            #     print('here it is')
-            #     print(next)
-            #     print(next)
-            #     print('cost so far:', [(el.location.x, el.location.y, el.turn)
-            #                             for el in cost_so_far.keys()])
-
-        # print('new elements:', [(el[0], el[1].location.x, el[1].location.y, el[1].turn,
-        #                          el[1].heat)
-        #                         for el in new_elements])
-
-        # print('queue:', [(el[0], el[1].location.x, el[1].location.y, el[1].turn)
-        #                  for el in frontier.elements])
-        # input()
                 
     return came_from, final_node #, cost_so_far
 
@@ -90,38 +66,77 @@ def reconstruct_path(came_from, start, end):
 
 ### Graph Implementation ###################################
 class SearchNode(namedtuple('SearchNode', ['location', 'turn', 'unit', 'heat'])):
-    def __lt__(self, other):
-        if self.turn > other.turn:
-            return False
-        elif self.location.x > other.location.x:
-            return False
-        elif self.location.y > other.location.y:
-            return False
-        elif self.heat > other.heat:
-            return False
-        elif self.unit >= other.unit:
-            return False
-        else:
-            return True
+    pass
+    # def __lt__(self, other):
+    #     # bc otherwise functions are compared in the priority queue
+    #     if self.turn > other.turn:
+    #         return False
+    #     elif self.location.x > other.location.x:
+    #         return False
+    #     elif self.location.y > other.location.y:
+    #         return False
+    #     elif self.heat > other.heat:
+    #         return False
+    #     elif self.unit >= other.unit:
+    #         return False
+    #     else:
+    #         return True
 
-    def __eq__(self, other):
-        if not isinstance(other, SearchNode):
-            return False
-        return (self.location.x == other.location.x and
-                self.location.y == other.location.y and
-                self.turn == other.turn and
-                self.unit == other.unit and
-                self.heat == other.heat)
+    # def __eq__(self, other):
+    #     if not isinstance(other, SearchNode):
+    #         return False
+    #     return (self.location.x == other.location.x and
+    #             self.location.y == other.location.y and
+    #             self.turn == other.turn and
+    #             self.unit == other.unit and
+    #             self.heat == other.heat)
 
-    def __hash__(self):
-        return hash(self.location.x ^
-                    self.location.y ^
-                    self.turn ^
-                    self.unit ^
-                    self.heat)
-        
+    # def __hash__(self):
+    #     return hash(self.location.x ^
+    #                 self.location.y ^
+    #                 self.turn ^
+    #                 self.unit ^
+    #                 self.heat
+
+LocationNode = namedtuple('LocationNode', ['location'])
+
+class LocationGraph:
+    '''Only tracks spatial movement (rather than time and space)'''
+    def __init__(self, gc):
+        self.gc = gc
+    
+    def neighbors(self, node):
+        directions = [Direction.East,
+                      Direction.North,
+                      Direction.Northeast,
+                      Direction.Northwest,
+                      Direction.South,
+                      Direction.Southeast,
+                      Direction.Southwest,
+                      Direction.West]
+        def neighbor(d):
+            return LocationNode(node.location.add(d))
+        moves = [neighbor(d) for d in directions]
+        filtered_moves = [m for m in moves if self.__is_clear(m)]
+        return filtered_moves
+
+    def __is_clear(self, node):
+        return self.gc.is_occupiable(node.location)
+
+    def cost(self, node1, node2):
+        return (abs(node1.location.x - node2.location.x) +
+                abs(node1.location.y - node2.location.y))
+
+    def heuristic(self, node1, node2):
+        x1 = node1.location.x
+        y1 = node1.location.y
+        x2 = node2.location.x
+        y2 = node2.location.y
+        return abs(x1 - x2) + abs(y1 - y2)
+
 class SearchGraph():
-
+    '''Tracks time, location, and heat of each unit. Allows for units to be
+    routed around each other in time and space.'''
     def __init__(self, gc, nav):
         self.gc = gc
         self.nav = nav
@@ -168,16 +183,14 @@ class SearchGraph():
         '''True iff the given node is not occupied by another unit.'''
         def check_location(location):
             if self.gc.is_occupiable(location):
-                # print('is occupiable')
                 return True
             else:
-                # print('checking parametrics')
                 # could be occupiable later if unit is moving
                 unit = self.gc.sense_unit_at_location(location)
                 if unit:
                     return unit in self.nav.traveling_units.keys()
                 else:
-                    #print("This message should happen -- delete it later if it does")
+                    # print("This message should happen -- delete it later if it does")
                     return False
         
         return (check_location(node.location)
@@ -268,18 +281,26 @@ class Navigator:
         '''Moves all units towards their destinations.'''
         units_to_move = [u for u in self.traveling_units
                          if self.gc.unit(u).is_move_ready()]
+        arrived_units = []
         for id, route in self.traveling_units.items():
             unit = self.gc.unit(id)
+            dest = route[-1]
             if unit.is_move_ready():
                 move = route.popleft()
                 dir = unit.location.map_location().direction_to(move)
-                print(dir)
-                if self.gc.can_move(id, dir):
+                if dir is Direction.Center:
+                    return
+                elif self.gc.can_move(id, dir):
                     print("moving unit", id)
                     self.gc.move_robot(id, dir)
+                    if unit.location.map_location() == dest:
+                        print('Unit', id, 'arrived at destination', (dest.x, dest.y))
+                        arrived_units.append(id)
                 else:
                     print("Unit", id, "is blocked! Rerouting...")
-                    self.traveling_units[id] = self.__find_route(id, route[-1])
+                    self.traveling_units[id] = self.__find_route(id, dest)
+        for unit in arrived_units:
+            self.free_unit(unit)
 
     # probably only useful for testing
     def still_navigating(self):
