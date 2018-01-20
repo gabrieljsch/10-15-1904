@@ -216,7 +216,6 @@ class SearchGraph():
 #     - is stuck or blocked
 
 class Navigator:
-
     # Overview of process:
     #  - maintain routes of each unit moving towards its destination
     #    and update them as necessary when things change
@@ -269,21 +268,25 @@ class Navigator:
         return not not self.traveling_units.keys()
     
     def __find_route(self, unit_id, destination):
+        '''Routes given unit and appropriately updates data
+        structures. Returns true if unit was successfully routed,
+        false otherwise.'''
         unit = self.gc.unit(unit_id)
         start_loc = unit.location.map_location()
         # first try to get there with plain old location search:
         if self.__scout_blocked(start_loc, destination):
             print('unit', unit_id, "can't find a route!")
-            return
+            return False
         start = SearchNode(start_loc, self.gc.round(), unit_id, unit.movement_heat())
         goal = destination
         came_from, end = a_star_search(self.graph, start, goal)
         path = reconstruct_path(came_from, start, end)
         path = deque([node.location for node in path])
         self.traveling_units[unit_id] = path
+        return True
 
     def __scout_blocked(self, start_loc, dest_loc):
-        '''Returns true iff path is blocked.'''
+        '''Returns true if path is blocked at this moment.'''
         start = LocationNode(start_loc)
         dest = LocationNode(dest_loc)
         came_from, end = a_star_search(self.loc_graph, start, dest)
