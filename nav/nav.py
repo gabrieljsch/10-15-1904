@@ -65,41 +65,8 @@ def reconstruct_path(came_from, start, end):
     return path
 
 ### Graph Implementation ###################################
-class SearchNode(namedtuple('SearchNode', ['location', 'turn', 'unit', 'heat'])):
-    pass
-    # def __lt__(self, other):
-    #     # bc otherwise functions are compared in the priority queue
-    #     if self.turn > other.turn:
-    #         return False
-    #     elif self.location.x > other.location.x:
-    #         return False
-    #     elif self.location.y > other.location.y:
-    #         return False
-    #     elif self.heat > other.heat:
-    #         return False
-    #     elif self.unit >= other.unit:
-    #         return False
-    #     else:
-    #         return True
-
-    # def __eq__(self, other):
-    #     if not isinstance(other, SearchNode):
-    #         return False
-    #     return (self.location.x == other.location.x and
-    #             self.location.y == other.location.y and
-    #             self.turn == other.turn and
-    #             self.unit == other.unit and
-    #             self.heat == other.heat)
-
-    # def __hash__(self):
-    #     return hash(self.location.x ^
-    #                 self.location.y ^
-    #                 self.turn ^
-    #                 self.unit ^
-    #                 self.heat
 
 LocationNode = namedtuple('LocationNode', ['location'])
-
 class LocationGraph:
     '''Only tracks spatial movement (rather than time and space)'''
     def __init__(self, gc):
@@ -124,8 +91,9 @@ class LocationGraph:
         return self.gc.is_occupiable(node.location)
 
     def cost(self, node1, node2):
-        return (abs(node1.location.x - node2.location.x) +
-                abs(node1.location.y - node2.location.y))
+        return 1
+        # return (abs(node1.location.x - node2.location.x) +
+        #         abs(node1.location.y - node2.location.y))
 
     def heuristic(self, node1, node2):
         x1 = node1.location.x
@@ -133,6 +101,13 @@ class LocationGraph:
         x2 = node2.location.x
         y2 = node2.location.y
         return abs(x1 - x2) + abs(y1 - y2)
+
+    def success(self, node, goal):    
+        return node.location == goal.location
+
+
+
+SearchNode = namedtuple('SearchNode', ['location', 'turn', 'unit', 'heat'])
 
 class SearchGraph():
     '''Tracks time, location, and heat of each unit. Allows for units to be
@@ -164,19 +139,8 @@ class SearchGraph():
                                    self.gc.unit(node.unit).movement_cooldown() - 10))
             moves = [neighbor(d) for d in directions]
             filtered_moves = [m for m in moves if self.__is_clear(m)]
-            # moves = [SearchNode(node.location.add(d),
-            #                     node.turn + 1,
-            #                     node.unit,
-            #                     (node.heat +
-            #                      self.gc.unit(node.unit).movement_cooldown() - 10))
-            #          for d in directions]
-            # print('all moves:', moves)
-            # filtered_moves = [m for m in moves if self.__is_clear(m)]
-            # print('filtered moves:', filtered_moves)
-            
             return filtered_moves + [dont_move]
         else:
-            #print('dont move:', dont_move)
             return [dont_move]
 
     def __is_clear(self, node):
@@ -229,10 +193,7 @@ class SearchGraph():
         y1 = goal.y
         x2 = node2.location.x
         y2 = node2.location.y
-
-        h = abs(x1 - x2) + abs(y1 - y2)
-        # print(x2, y2, '->', h)
-        return h
+        return abs(x1 - x2) + abs(y1 - y2)
 
     def success(self, node, goal):
         
@@ -264,6 +225,7 @@ class Navigator:
     def __init__(self, gc):
         self.gc = gc
         self.graph = SearchGraph(gc, self)
+        self.loc_graph = LocationGraph(gc)
         # track all units bc they are impassable
         self.units = []
         # track units that are moving and their routes
@@ -271,7 +233,7 @@ class Navigator:
         
     def direct_unit(self, unit_id, destination):
         '''Move unit to destination over a number of turns.'''
-        self.traveling_units[unit_id] = self.__find_route(unit_id, destination)
+        self.__find_route(unit_id, destination)
         self.units.append(unit_id)
 
     def free_unit(self, unit_id):
@@ -309,16 +271,23 @@ class Navigator:
     def __find_route(self, unit_id, destination):
         unit = self.gc.unit(unit_id)
         start_loc = unit.location.map_location()
+        # first try to get there with plain old location search:
+        if self.__scout_blocked(start_loc, destination):
+            print('unit', unit_id, "can't find a route!")
+            return
         start = SearchNode(start_loc, self.gc.round(), unit_id, unit.movement_heat())
         goal = destination
         came_from, end = a_star_search(self.graph, start, goal)
         path = reconstruct_path(came_from, start, end)
         path = deque([node.location for node in path])
-        # print([(l.x, l.y) for l in path])
-        # self.traveling_units[unit_id] = path
-        # print([(l.x, l.y) for l in path])
-        # print(self.traveling_units)
-        return path
+        self.traveling_units[unit_id] = path
+
+    def __scout_blocked(self, start_loc, dest_loc):
+        '''Returns true iff path is blocked.'''
+        start = LocationNode(start_loc)
+        dest = LocationNode(dest_loc)
+        came_from, end = a_star_search(self.loc_graph, start, dest)
+        return end is None
         
 ### Backup Navigation ######################################
 # TODO Idea is to keep track of total movement of units and fall back
