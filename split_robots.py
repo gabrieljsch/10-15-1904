@@ -31,26 +31,10 @@ def split_robots(units, worker_objects, factory_objects, soldier_objects, gc):
     new_worker_objects =[]
     new_factory_objects= []
     new_soldier_objects = []
+    unbuilt_structures =[]
 
     for i in range(len(all_objects)):
-        #if an old unit is not in units now
-        if all_objects[i].unit.id not in id_list:
-            robot = all_objects[i]
-            if robot in worker_objects:
-                worker_objects.remove(robot)
-                print("removed", robot.unit)
-                print("all units last turn", all_units_last_turn)
-                print("my units", units)
-            if robot in factory_objects:
-                factory_objects.remove(robot)
-                print("removed", robot.unit)
-                print("all units last turn", all_units_last_turn)
-                print("my units", units)
-            if robot in soldier_objects:
-                soldier_objects.remove(robot)
-                print("removed", robot)
-                print("all units last turn", all_units_last_turn)
-                print("my units", units)
+
         if all_objects[i].unit.id in id_list:
             #resets the units of all old objects
             robot = all_objects[i]
@@ -72,6 +56,10 @@ def split_robots(units, worker_objects, factory_objects, soldier_objects, gc):
 
     #loops through units at start of this turn
     for unit in units:
+        #check if unbuilt factory (or rocket?)
+        if unit.unit_type == bc.UnitType.Factory and unit.structure_is_built() == False:
+            unbuilt_structures.append(unit)
+            continue
         #checks if the unit is new, by check if existed last turn
         if unit.id not in all_units_last_turn:
             #if no, make the object and add it to its object list
@@ -86,8 +74,7 @@ def split_robots(units, worker_objects, factory_objects, soldier_objects, gc):
             if unit.unit_type is bc.UnitType.Ranger:
                 new_unit = task_mgmt.Worker(unit)
                 new_soldier_objects.append(new_unit)
-                print("add solider", new_unit)
 
 
 
-    return new_worker_objects, new_factory_objects, new_soldier_objects
+    return new_worker_objects, new_factory_objects, new_soldier_objects, unbuilt_structures

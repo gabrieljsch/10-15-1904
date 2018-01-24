@@ -17,6 +17,7 @@ class Gather_k(task_mgmt.Task):
         self.worker_object = worker_object
         self.worker = worker_object.unit
         self.done_gathering = False
+        self.counter = 0
 
     def execute(self):
         directions = list(bc.Direction)
@@ -49,6 +50,8 @@ class Gather_k(task_mgmt.Task):
                     traceback.print_exc()
             except:
                 traceback.print_exc()
-
+        self.counter +=1
+        if self.counter > 10:
+            self.done_gathering  = True
     def is_done(self):
         return self.done_gathering

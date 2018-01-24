@@ -21,7 +21,7 @@ def on_turn_one(gc):
 
     #set workers needed and factories needed
     workers_needed = 4
-    factories_needed = 1
+    factories_needed = 3
     #home is location of our worker initially
     my_units = gc.my_units()
     if len(my_units) != 0:

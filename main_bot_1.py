@@ -47,11 +47,11 @@ if gc.planet() is bc.Planet.Earth:
 while True:
 
     #only run earth
-    if gc.planet() is bc.Planet.Earth:
+    if gc.planet() is bc.Planet.Earth and gc.team() is bc.Team.Red:
 
 
         # split units into respective groups
-        worker_objects, factory_objects, soldier_objects  = split_robots(gc.my_units(), worker_objects, factory_objects, soldier_objects, gc)
+        worker_objects, factory_objects, soldier_objects, unbuilt_structures  = split_robots(gc.my_units(), worker_objects, factory_objects, soldier_objects, gc)
         all_objects = worker_objects+ factory_objects+ soldier_objects
 
         #worker controls
@@ -71,24 +71,26 @@ while True:
                         replicated +=1
 
 
-
         #if we have enough workers and need factories
         if len(worker_objects) > workers_needed:
             if len(factory_objects) < factories_needed:
                 builder = worker_objects[0]
                 if builder.task is None:
-                    print('assigned:',builder.unit.id)
-                    builder.assign(Make_factory_at(gc, builder, find_fac_loc(gc, home_loc), enemy_dir))
+                    builder.assign(Make_factory_at(gc, builder, find_fac_loc(gc, home_loc)))
             else:
                 if builder.task is None:
-                    print('assigned to gather builder:',builder.unit.id)
                     builder.assign(Gather_k(gc, builder, started_with_karbonite, home_loc))
 
-        if gc.round() == 10:
+        if gc.round() > 1:
             for worker_o in worker_objects:
                 if worker_o.task is None and worker_o != worker_objects[0]:
-                    print('assigned to gather other:',worker_o.unit.id)
-                    worker_o.assign(Gather_k(gc, worker_o, started_with_karbonite, home_loc))
+                    if len(unbuilt_structures)> 0:
+                        try:
+                            worker_o.assign(Make_factory_at(gc, worker_o, unbuilt_structures[0].location.map_location()))
+                        except:
+                            print("can't make it")
+                    else:
+                        worker_o.assign(Gather_k(gc, worker_o, started_with_karbonite, home_loc))
 
         #factory_controls
         if len(factory_objects) !=0:
@@ -103,10 +105,10 @@ while True:
 
 
         #check printng loop
-        if gc.round() % 50 == 0:
-            print("Round is:", gc.round())
-            print("worker objects", worker_objects)
-            print("starting carb", started_with_karbonite)
+        # if gc.round() % 50 == 0:
+        #     print("Round is:", gc.round())
+        #     print("worker objects", worker_objects)
+        #     print("starting carb", started_with_karbonite)
 
         #main worker loop
         for worker_object in all_objects:

@@ -59,7 +59,6 @@ def military_supervisor(gc, soldier_objects, factory_objects, enemy_dir, home_lo
                 try:
                     if soldier.location.is_in_garrison() != True:
                         units_near = gc.sense_nearby_units_by_team(soldier.location.map_location(), soldier.attack_range(), oppo_team)
-                        print("units near", units_near)
                     else:
                         units_near = []
                 except:
@@ -67,7 +66,6 @@ def military_supervisor(gc, soldier_objects, factory_objects, enemy_dir, home_lo
                     traceback.print_exc()
                 #if we do
                 if len(units_near) != 0:
-                    print("try to get em!")
                     #try to attack then do
                     if gc.can_attack(soldier.id, units_near[0].id) == True:
                         if soldier.attack_heat() < 10:
