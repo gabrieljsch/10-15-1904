@@ -16,7 +16,7 @@ def split_robots(units, worker_objects, factory_objects, soldier_objects, gc):
     # will likely cause some reference errors
 
     #make list of all_units
-    all_objects = worker_objects + factory_objects +soldier_objects
+    all_objects = worker_objects + factory_objects + soldier_objects
     all_units_last_turn = []
     for robot in all_objects:
         all_units_last_turn.append(robot.unit.id)
@@ -26,6 +26,11 @@ def split_robots(units, worker_objects, factory_objects, soldier_objects, gc):
     id_list = []
     for unit in units:
         id_list.append(unit.id)
+
+    #creates new lists
+    new_worker_objects =[]
+    new_factory_objects= []
+    new_soldier_objects = []
 
     for i in range(len(all_objects)):
         #if an old unit is not in units now
@@ -46,11 +51,22 @@ def split_robots(units, worker_objects, factory_objects, soldier_objects, gc):
                 print("removed", robot)
                 print("all units last turn", all_units_last_turn)
                 print("my units", units)
+        if all_objects[i].unit.id in id_list:
+            #resets the units of all old objects
+            robot = all_objects[i]
+            new_unit = gc.unit(all_objects[i].unit.id)
+            old_task = all_objects[i].task
+            new_object = task_mgmt.Worker(new_unit)
+            new_object.assign(old_task)
+            #spreads them
+            if robot in worker_objects:
+                new_worker_objects.append(new_object)
 
+            if robot in factory_objects:
+                new_factory_objects.append(new_object)
 
-
-
-
+            if robot in soldier_objects:
+                new_soldier_objects.append(new_object)
 
 
 
@@ -61,15 +77,17 @@ def split_robots(units, worker_objects, factory_objects, soldier_objects, gc):
             #if no, make the object and add it to its object list
             if unit.unit_type is bc.UnitType.Worker:
                 new_unit = task_mgmt.Worker(unit)
-                worker_objects.append(new_unit)
+                new_worker_objects.append(new_unit)
             if unit.unit_type is bc.UnitType.Factory:
                 if unit.structure_is_built() == True:
                     new_unit = task_mgmt.Worker(unit)
-                    factory_objects.append(new_unit)
+                    new_factory_objects.append(new_unit)
             #TODO add other military units
             if unit.unit_type is bc.UnitType.Ranger:
                 new_unit = task_mgmt.Worker(unit)
-                soldier_objects.append(new_unit)
+                new_soldier_objects.append(new_unit)
                 print("add solider", new_unit)
 
-    return worker_objects, factory_objects, soldier_objects
+
+
+    return new_worker_objects, new_factory_objects, new_soldier_objects

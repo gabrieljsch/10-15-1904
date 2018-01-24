@@ -17,7 +17,7 @@ class Gather_k(task_mgmt.Task):
         self.worker_object = worker_object
         self.worker = worker_object.unit
         self.done_gathering = False
-        
+
     def execute(self):
         directions = list(bc.Direction)
         if len(self.started_with_karbonite) != 0:
@@ -31,6 +31,7 @@ class Gather_k(task_mgmt.Task):
                     if self.gc.can_sense_location(location) == True:
                         if self.gc.karbonite_at(location) < 1:
                             self.started_with_karbonite.remove(location)
+                            self.done_gathering == True
 
                 #if it can harvest do
                 if self.gc.can_harvest(self.worker.id, bc.Direction.Center)==True:

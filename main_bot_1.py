@@ -13,6 +13,7 @@ from military_supervisor import military_supervisor
 from set_enemy_dir import set_enemy_dir
 from find_home_loc import find_home_loc
 from on_turn_one import on_turn_one
+from find_fac_loc import find_fac_loc
 
 # Template for importing files
 from task_mgmt import task_mgmt
@@ -54,19 +55,39 @@ while True:
         all_objects = worker_objects+ factory_objects+ soldier_objects
 
         #worker controls
+
+        #if we dont have enough workers but have 1
+        if len(worker_objects) != 0 and len(worker_objects)<= workers_needed:
+            for worker_object in worker_objects:
+                worker = worker_object.unit.id
+                print(worker)
+                replicated = 0
+                while replicated < 8:
+                    direction = directions[replicated]
+                    if gc.can_replicate(worker, direction):
+                        gc.replicate(worker, direction)
+                        replicated = 10
+                    else:
+                        replicated +=1
+
+
+
+        #if we have enough workers and need factories
         if len(worker_objects) > workers_needed:
             if len(factory_objects) < factories_needed:
                 builder = worker_objects[0]
                 if builder.task is None:
                     print('assigned:',builder.unit.id)
-                    builder.assign(Make_factory_at(gc, builder,home_loc, enemy_dir))
+                    builder.assign(Make_factory_at(gc, builder, find_fac_loc(gc, home_loc), enemy_dir))
             else:
                 if builder.task is None:
+                    print('assigned to gather builder:',builder.unit.id)
                     builder.assign(Gather_k(gc, builder, started_with_karbonite, home_loc))
 
-        if gc.round() == 1:
+        if gc.round() == 10:
             for worker_o in worker_objects:
-                if worker_o.task is None:
+                if worker_o.task is None and worker_o != worker_objects[0]:
+                    print('assigned to gather other:',worker_o.unit.id)
                     worker_o.assign(Gather_k(gc, worker_o, started_with_karbonite, home_loc))
 
         #factory_controls
@@ -78,13 +99,7 @@ while True:
 
         #soldier controllers
         if len(soldier_objects) > 0:
-            print("soldiers", soldier_objects)
             soldier_objects = military_supervisor(gc, soldier_objects, factory_objects, enemy_dir, home_loc, attack_dir)
-
-
-
-
-
 
 
         #check printng loop
@@ -96,10 +111,7 @@ while True:
         #main worker loop
         for worker_object in all_objects:
             if worker_object.task is not None:
-                print("working")
                 worker_object.work()
-
-
 
 
     # send the actions we've performed, and wait for our next turn.

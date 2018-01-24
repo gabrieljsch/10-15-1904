@@ -7,6 +7,7 @@ from task_mgmt import task_mgmt
 
 from move_directly import move_directly
 from build_factory_at import build_factory_at
+from find_open_adj_locs import find_open_adj_locs
 
 class Make_factory_at(task_mgmt.Task):
 
@@ -17,27 +18,39 @@ class Make_factory_at(task_mgmt.Task):
         self.factory_location = factory_location
         self.enemy_dir = enemy_dir
         self.factory_built = False
+        self.destination = None
 
     def execute(self):
-        builder_location = self.factory_location.clone()
-        fac_location = self.factory_location.add(self.enemy_dir)
+
+        self.unit = self.gc.unit(self.unit.id)
+        try:
+            destination = find_open_adj_locs(self.gc, self.factory_location, self.unit)[0]
+            self.destination = destination
+        except:
+            print("No destination?")
+
+
+        print("destination", self.destination)
+        fac_location = self.factory_location.clone()
         #tests if unit at test space
-
         location_of_unit = self.unit.location.map_location()
-
-        if location_of_unit.direction_to(builder_location) is bc.Direction.Center:
+        print("location", location_of_unit)
+        if location_of_unit.direction_to(self.destination) is bc.Direction.Center:
+            print("There")
             #at location
-            if self.gc.can_blueprint(self.unit.id, bc.UnitType.Factory, self.enemy_dir):
-                self.gc.blueprint(self.unit.id, bc.UnitType.Factory, self.enemy_dir)
-
+            if self.gc.can_blueprint(self.unit.id, bc.UnitType.Factory, location_of_unit.direction_to(fac_location)):
+                self.gc.blueprint(self.unit.id, bc.UnitType.Factory, location_of_unit.direction_to(fac_location))
+                print("laid blueprint")
             else:
                 build_factory_at(self.gc, self.unit, fac_location)
+
+
 
             if self.gc.can_sense_location(fac_location) == True:
                 if self.gc.has_unit_at_location(fac_location) ==True:
                     try:
                         blueprint = self.gc.sense_unit_at_location(fac_location)
-            
+
                         if blueprint.structure_is_built() == True:
                             print("built it")
                             print("blueprint",blueprint)
@@ -48,9 +61,11 @@ class Make_factory_at(task_mgmt.Task):
 
         else:
             try:
-                move_directly(self.gc, self.unit, builder_location)
+                print("moving")
+                move_directly(self.gc, self.unit, self.destination)
             except:
                 traceback.print_exc()
+
 
 
 

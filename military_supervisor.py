@@ -13,10 +13,7 @@ directions = list(bc.Direction)
 
 def military_supervisor(gc, soldier_objects, factory_objects, enemy_dir, home_loc, attack_dir):
     """
-    supervises military units. In this case,builds 7 rangers,lines them
-    diagonally in front of the base, then charges accross the map and attacks
-
-    imputs are gc, soldier list, and factory list
+    supervises the troops
     """
 
     fac_location = factory_objects[0].unit.location.map_location()
@@ -60,8 +57,6 @@ def military_supervisor(gc, soldier_objects, factory_objects, enemy_dir, home_lo
                 soldier = soldier.unit
                 #check if we see any enemies
                 try:
-                    print("look around",soldier.location.is_in_garrison(), soldier.location, soldier.id)
-
                     if soldier.location.is_in_garrison() != True:
                         units_near = gc.sense_nearby_units_by_team(soldier.location.map_location(), soldier.attack_range(), oppo_team)
                         print("units near", units_near)
