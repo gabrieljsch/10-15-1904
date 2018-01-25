@@ -19,10 +19,7 @@ class Make_rocket_at(task_mgmt.Task):
         self.rocket_location = rocket_location
         self.rocket_built = False
         self.destination = None
-        print("rocket location", rocket_location)
-        if gc.can_sense_location(rocket_location) == True:
-            if gc.has_unit_at_location(rocket_location) ==True:
-                print("unit there",gc.sense_unit_at_location(rocket_location))
+        
     def execute(self):
 
         self.unit = self.gc.unit(self.unit.id)
