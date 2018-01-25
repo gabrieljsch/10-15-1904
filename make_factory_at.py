@@ -46,9 +46,9 @@ class Make_factory_at(task_mgmt.Task):
                 if self.gc.has_unit_at_location(fac_location) ==True:
                     try:
                         blueprint = self.gc.sense_unit_at_location(fac_location)
-
-                        if blueprint.structure_is_built() == True:
-                            self.factory_built = True
+                        if blueprint.unit_type == bc.UnitType.Factory:
+                            if blueprint.structure_is_built() == True:
+                                self.factory_built = True
                     except:
                         traceback.print_exc()
 

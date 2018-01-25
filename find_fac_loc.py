@@ -5,8 +5,6 @@ import traceback
 
 
 def find_fac_loc(gc, home_loc):
-    print()
-    print("intitating find fac loc")
     fac_loc = None
     test_loc = home_loc.clone()
     # test_loc = test_loc.add(enemy_dir)

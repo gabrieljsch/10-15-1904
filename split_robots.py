@@ -32,6 +32,7 @@ def split_robots(units, worker_objects, factory_objects, soldier_objects, gc):
     new_factory_objects= []
     new_soldier_objects = []
     unbuilt_structures =[]
+    rockets = []
 
     for i in range(len(all_objects)):
 
@@ -57,9 +58,14 @@ def split_robots(units, worker_objects, factory_objects, soldier_objects, gc):
     #loops through units at start of this turn
     for unit in units:
         #check if unbuilt factory (or rocket?)
-        if unit.unit_type == bc.UnitType.Factory and unit.structure_is_built() == False:
+        if (unit.unit_type == bc.UnitType.Factory or unit.unit_type == bc.UnitType.Rocket) and unit.structure_is_built() == False:
             unbuilt_structures.append(unit)
             continue
+
+        #check if built rockets
+        if unit.unit_type == bc.UnitType.Rocket and unit.structure_is_built() == True:
+            rockets.append(unit)
+
         #checks if the unit is new, by check if existed last turn
         if unit.id not in all_units_last_turn:
             #if no, make the object and add it to its object list
@@ -77,4 +83,4 @@ def split_robots(units, worker_objects, factory_objects, soldier_objects, gc):
 
 
 
-    return new_worker_objects, new_factory_objects, new_soldier_objects, unbuilt_structures
+    return new_worker_objects, new_factory_objects, new_soldier_objects, unbuilt_structures, rockets

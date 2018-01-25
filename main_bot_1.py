@@ -14,6 +14,7 @@ from set_enemy_dir import set_enemy_dir
 from find_home_loc import find_home_loc
 from on_turn_one import on_turn_one
 from find_fac_loc import find_fac_loc
+from make_rocket_at import Make_rocket_at
 
 # Template for importing files
 from task_mgmt import task_mgmt
@@ -28,7 +29,7 @@ gc = bc.GameController()
 # gc = bc.GameController()
 directions = list(bc.Direction)
 
-# random.seed(6)
+random.seed(6)
 
 
 #make worker object lists
@@ -47,11 +48,12 @@ if gc.planet() is bc.Planet.Earth:
 while True:
 
     #only run earth
-    if gc.planet() is bc.Planet.Earth and gc.team() is bc.Team.Red:
+    if gc.planet() is bc.Planet.Earth:
+        #  and gc.team() is bc.Team.Red:
 
 
         # split units into respective groups
-        worker_objects, factory_objects, soldier_objects, unbuilt_structures  = split_robots(gc.my_units(), worker_objects, factory_objects, soldier_objects, gc)
+        worker_objects, factory_objects, soldier_objects, unbuilt_structures, rockets = split_robots(gc.my_units(), worker_objects, factory_objects, soldier_objects, gc)
         all_objects = worker_objects+ factory_objects+ soldier_objects
 
         #worker controls
@@ -60,7 +62,6 @@ while True:
         if len(worker_objects) != 0 and len(worker_objects)<= workers_needed:
             for worker_object in worker_objects:
                 worker = worker_object.unit.id
-                print(worker)
                 replicated = 0
                 while replicated < 8:
                     direction = directions[replicated]
@@ -69,7 +70,6 @@ while True:
                         replicated = 10
                     else:
                         replicated +=1
-
 
         #if we have enough workers and need factories
         if len(worker_objects) > workers_needed:
@@ -81,16 +81,37 @@ while True:
                 if builder.task is None:
                     builder.assign(Gather_k(gc, builder, started_with_karbonite, home_loc))
 
+        if gc.research_info().get_level(bc.UnitType.Rocket) >=1:
+            if len(rockets) == 0:
+                if len(worker_objects) >1 :
+                    rocket_man = worker_objects[0]
+                    if rocket_man.task is None:
+                        rocket_man.assign(Make_rocket_at(gc,rocket_man, find_fac_loc(gc, rocket_man.unit.location.map_location())))
+                        print("build that rocket")
+
+
+        #if nothing else, build then gather
         if gc.round() > 1:
             for worker_o in worker_objects:
                 if worker_o.task is None and worker_o != worker_objects[0]:
                     if len(unbuilt_structures)> 0:
-                        try:
-                            worker_o.assign(Make_factory_at(gc, worker_o, unbuilt_structures[0].location.map_location()))
-                        except:
-                            print("can't make it")
+                        if unbuilt_structures[0].unit_type == bc.UnitType.Factory:
+                            try:
+                                worker_o.assign(Make_factory_at(gc, worker_o, unbuilt_structures[0].location.map_location()))
+                            except:
+                                print("can't make factory")
+                        if unbuilt_structures[0].unit_type == bc.UnitType.Rocket:
+                            try:
+                                worker_o.assign(Make_rocket_at(gc, worker_o, unbuilt_structures[0].location.map_location()))
+                            except:
+                                print("cant make rocket")
                     else:
                         worker_o.assign(Gather_k(gc, worker_o, started_with_karbonite, home_loc))
+
+        #try building a rocket
+
+
+
 
         #factory_controls
         if len(factory_objects) !=0:
@@ -105,10 +126,10 @@ while True:
 
 
         #check printng loop
-        # if gc.round() % 50 == 0:
-        #     print("Round is:", gc.round())
-        #     print("worker objects", worker_objects)
-        #     print("starting carb", started_with_karbonite)
+        if gc.round() % 100 == 0:
+            print("Round is:", gc.round())
+            print("rockets", rockets)
+            print("unbuilt_objects", unbuilt_structures)
 
         #main worker loop
         for worker_object in all_objects:

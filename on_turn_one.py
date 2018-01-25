@@ -5,6 +5,7 @@ import traceback
 
 from set_enemy_dir import set_enemy_dir
 from find_home_loc import find_home_loc
+from queue_all_research import queue_all_research
 
 def on_turn_one(gc):
     earth_map = gc.starting_map(bc.Planet.Earth)
@@ -31,6 +32,7 @@ def on_turn_one(gc):
     #then set spaced out home
     home_loc = find_home_loc(gc, new_loc, enemy_dir)
 
+    queue_all_research(gc)
     #set enemy direction
     print("enemy_dir",enemy_dir)
     print()
