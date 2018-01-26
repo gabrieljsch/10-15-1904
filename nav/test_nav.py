@@ -13,6 +13,8 @@ directions = [Direction.East,
               Direction.West,
               Direction.Center]
 
+alpha = "abcdefghijklmnopqrstuvwxyz"
+
 def dir_to_delta(dir):
     if dir is Direction.East:
         return (0, 1)
@@ -86,7 +88,7 @@ class World:
     def __init__(self, width, init_string):
         self.units = {}
         self.obstacles = set()
-        self.goal = None
+        self.goals = {}
         self.width = width
         self.rnd = 0
         self.height = self.__parse_init_string(init_string)
@@ -94,9 +96,10 @@ class World:
     def __add_obstacle(self, coord):
         self.obstacles.add(coord)
 
-    def __add_goal(self, coord):
+    def __add_goal(self, unit_id, coord):
+        self.goals[unit_id] = coord
         # TODO multiple goals
-        self.goal = coord_to_loc(coord)
+        # self.goal = coord_to_loc(coord)
 
     def __add_unit(self, id, coord):
         x, y = coord
@@ -159,8 +162,9 @@ class World:
                 self.__add_unit(int(char), loc)
             elif char in "#|-+": # wall
                 self.__add_obstacle(loc)
-            elif char in "G*":
-                self.__add_goal(loc)
+            elif char in alpha:
+                i = alpha.index(char)
+                self.__add_goal(i, loc)
             else:
                 pass
 
@@ -183,8 +187,10 @@ class World:
         # write all data structures to output list:
         for x, y in self.obstacles:
             out[x][y] = '#'
-        x, y = self.goal.x, self.goal.y
-        out[x][y] = '*' # TODO multiple goals
+        for id, goal in self.goals.items():
+            x, y = goal
+            out[x][y] = alpha[id]
+            # out[x][y] = '*' # TODO multiple goals
         for id, unit in self.units.items():
             x, y = loc_to_coord(unit.location.map_location())
             out[x][y] = str(id)
@@ -203,7 +209,7 @@ easy = """
 . . . . . . .
 . . . . . . .
 . . . # . . .
-. 1 . # . * .
+. 0 . # . a .
 . . . # . . .
 . . . . . . .
 . . . . . . .
@@ -213,7 +219,7 @@ harder = """
 . . . . # . .
 . . # . # . .
 . . # . # . .
-. 1 # . # * .
+. 0 # . # a .
 . . # . # . .
 . . # . # . .
 . . # . . . .
@@ -223,19 +229,19 @@ simple_blocked ="""
 . . . # . . .
 . . . # . . .
 . . . # . . .
-. 1 . # . * .
+. 0 . # . a .
 . . . # . . .
 . . . # . . .
 . . . # . . .
 """
 
 tunnel = """
-. . . . * . . . . . . . 
+. . . a b c . . . . . . 
 . . . # . # . . . . . . 
 . . . # . # . . . . . . 
+. . . # 0 # . . . . . . 
 . . . # 1 # . . . . . . 
 . . . # 2 # . . . . . . 
-. . . # 3 # . . . . . . 
 . . . # . # . . . . . . 
 . . . # . # . . . . . . 
 . . . # . # . . . . . . 
@@ -243,19 +249,33 @@ tunnel = """
 . . . . . . . . . . . . 
 """
 
-ez_world = World(7, harder)
-print(ez_world.to_string())
-nav = Navigator(ez_world)
-nav.direct_unit(1, ez_world.goal)
+circular_deps = """
+. . . . . . . .
+. # # # # # # .
+. # . 0 c . # .
+. # . # # 1 # .
+. # . # # a # .
+. # . b 2 . # .
+. # # # # # # .
+. . . . . . . .
+"""
+
+# ez_world = World(7, harder)
+world = World(12, tunnel)
+print(world.to_string())
+nav = Navigator(world)
+units = [0, 1, 2]
+for u in units:
+    nav.direct_unit(u, world.goals[u])
 while nav.still_navigating():
     nav.move_units()
-    print(ez_world.to_string())
-    ez_world.end_turn()
+    print(world.to_string())
+    world.end_turn()
     input()
 
 
 bad_tunnel = """
-....*.......
+...abc.....
 ...#.#......
 ...#.#......
 ...#3#......
