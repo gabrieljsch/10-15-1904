@@ -16,6 +16,7 @@ from on_turn_one import on_turn_one
 from find_fac_loc import find_fac_loc
 from make_rocket_at import Make_rocket_at
 from rocket_supervisor import rocket_supervisor
+from main_mars import main_mars
 
 # Template for importing files
 from task_mgmt import task_mgmt
@@ -47,6 +48,14 @@ if gc.planet() is bc.Planet.Earth:
 
 #Running bot
 while True:
+
+    #Only run mars
+    if gc.planet() is bc.Planet.Mars:
+        main_mars(gc)
+        # send the actions we've performed, and wait for our next turn.
+        gc.next_turn()
+        sys.stdout.flush()
+        sys.stderr.flush()
 
     #only run earth
     if gc.planet() is bc.Planet.Earth:
@@ -89,7 +98,8 @@ while True:
                         rocket_man = worker_objects[0]
                         if rocket_man.task is None:
                             rocket_man.assign(Make_rocket_at(gc,rocket_man, find_fac_loc(gc, rocket_man.unit.location.map_location())))
-                            
+
+
 
 
         if len(rockets) >= 2:
@@ -160,6 +170,7 @@ while True:
                     worker_object.work()
                 except:
                     print("failed work")
+
 
 
     # send the actions we've performed, and wait for our next turn.
