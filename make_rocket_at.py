@@ -19,7 +19,7 @@ class Make_rocket_at(task_mgmt.Task):
         self.rocket_location = rocket_location
         self.rocket_built = False
         self.destination = None
-        
+
     def execute(self):
 
         self.unit = self.gc.unit(self.unit.id)
@@ -30,7 +30,6 @@ class Make_rocket_at(task_mgmt.Task):
             print("No destination?")
 
 
-
         roc_location = self.rocket_location.clone()
         #tests if unit at test space
         location_of_unit = self.unit.location.map_location()
@@ -38,7 +37,6 @@ class Make_rocket_at(task_mgmt.Task):
             #at location
             if self.gc.can_blueprint(self.unit.id, bc.UnitType.Rocket, location_of_unit.direction_to(roc_location)):
                 self.gc.blueprint(self.unit.id, bc.UnitType.Rocket, location_of_unit.direction_to(roc_location))
-                print("laid print")
             else:
                 #changeeeeeee
 
@@ -53,7 +51,6 @@ class Make_rocket_at(task_mgmt.Task):
                         if blueprint.unit_type == bc.UnitType.Rocket:
                             if blueprint.structure_is_built() == True:
                                 self.rocket_built = True
-                                print("rocket built")
                     except:
                         traceback.print_exc()
 

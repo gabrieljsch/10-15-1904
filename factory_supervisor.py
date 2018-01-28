@@ -25,7 +25,7 @@ class Factory_supervisor(task_mgmt.Task):
 
             factory = self.factory_unit.unit
             #if it can produce a ranger
-            if self.gc.karbonite()>30:
+            if self.gc.karbonite()>60:
                 if self.gc.can_produce_robot(factory.id, bc.UnitType.Ranger) ==True:
                     try:
                         #and there are less than 7

@@ -92,27 +92,14 @@ while True:
 
         #build them rockets
         if gc.research_info().get_level(bc.UnitType.Rocket) >=1:
-            if len(rockets) == 0:
+            if len(rockets) < 4:
                 if len(worker_objects) >1:
-                    if rocket_tally < 3:
-                        rocket_man = worker_objects[0]
-                        if rocket_man.task is None:
-                            rocket_man.assign(Make_rocket_at(gc,rocket_man, find_fac_loc(gc, rocket_man.unit.location.map_location())))
+                    rocket_man = worker_objects[0]
+                    if rocket_man.task is None:
+                        rocket_man.assign(Make_rocket_at(gc,rocket_man, find_fac_loc(gc, rocket_man.unit.location.map_location())))
 
 
 
-
-        if len(rockets) >= 2:
-            rocket_tally = 4
-            # #checks how many rockets weve sent,
-            # num_in_air = 0
-            # if len(gc.units_in_space()) != 0:
-            #     for unit in gc.units_in_space():
-            #         if unit.unit_type = bc.UnitType.Rocket:
-            #             num_in_air+=1
-            #
-            # if num_in_air > rocket_tally:
-            #     rocket_tally +=1
 
 
         #if nothing else, build then gather
@@ -138,7 +125,7 @@ while True:
 
         #rocket_controls
         if len(rockets) != 0:
-            worker_objects = rocket_supervisor(gc,rockets, worker_objects)
+            worker_objects = rocket_supervisor(gc,rockets, worker_objects, soldier_objects)
 
 
 
@@ -157,10 +144,15 @@ while True:
 
 
         #check printng loop
-        if gc.round() % 100 == 0:
-            print("Round is:", gc.round())
-            print("rockets", rockets)
-            print("unbuilt_objects", unbuilt_structures)
+        # try:
+        #
+        #     if gc.round() % 100 == 0:
+        #         print("Round is:", gc.round())
+        #         print("rockets", rockets)
+        #         print("unbuilt_objects", unbuilt_structures)
+        #         print("worker 1", worker_objects[0].unit, worker_objects[0].task)
+        # except:
+        #     pass
 
         #main worker loop
         all_objects = worker_objects+ factory_objects+ soldier_objects

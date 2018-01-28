@@ -5,7 +5,7 @@ import traceback
 
 from find_safe_landing_loc import find_safe_landing_loc
 
-def rocket_supervisor(gc,rockets, worker_objects):
+def rocket_supervisor(gc,rockets, worker_objects, soldier_objects):
 
 
 
@@ -14,6 +14,11 @@ def rocket_supervisor(gc,rockets, worker_objects):
         for worker in worker_objects:
             if gc.can_load(rocket.id,worker.unit.id):
                 gc.load(rocket.id,worker.unit.id)
+        #adds on soldier loading, should be set late
+        if gc.round()>100:
+            for soldier in soldier_objects:
+                if gc.can_load(rocket.id,soldier.unit.id):
+                    gc.load(rocket.id,soldier.unit.id)
                 # print("tried to yank him")
                 # worker_objects.remove(worker)
 

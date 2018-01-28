@@ -16,7 +16,7 @@ def military_supervisor(gc, soldier_objects, factory_objects, enemy_dir, home_lo
     supervises the troops
     """
 
-    fac_location = factory_objects[0].unit.location.map_location()
+
     release_direction = enemy_dir
 
 
@@ -74,6 +74,7 @@ def military_supervisor(gc, soldier_objects, factory_objects, enemy_dir, home_lo
                     for unit in units_near:
                         if unit not in full_unit_seen_list:
                             full_unit_seen_list.append(unit)
+                            
                 #else continue charge
                 else:
                     #sets var for random vs move toward
