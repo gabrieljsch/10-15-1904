@@ -3,7 +3,7 @@ import random
 import sys
 import traceback
 
-from make_factory_at import make_factory_at
+from make_factory_at import Make_factory_at
 from make_location import make_location
 
 def worker_ai(gc, workers, factories, need_factory, home_loc):
@@ -22,7 +22,7 @@ def worker_ai(gc, workers, factories, need_factory, home_loc):
                 location_for_factory = make_location(gc, 1, 6)
             else:
                 location_for_factory = make_location(gc, 19, 13)
-                
+
             need_factory = make_factory_at(gc, builder, location_for_factory, need_factory)
             return need_factory
     except:
