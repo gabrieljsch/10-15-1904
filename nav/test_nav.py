@@ -289,7 +289,19 @@ circular_deps = """
 """
 
 # ez_world = World(7, harder)
-world = World(12, tunnel)
+# world = World(12, hard2)
+# print(world.to_string())
+# nav = Navigator(world)
+# units = [0, 1, 2]
+# for u in units:
+#     nav.direct_unit(u, coord_to_loc(world.goals[u]))
+# while nav.still_navigating():
+#     nav.move_units()
+#     print(world.to_string())
+#     world.end_turn()
+#     input()
+
+world = World(12, hard)
 print(world.to_string())
 nav = Navigator(world)
 units = [0, 1, 2]

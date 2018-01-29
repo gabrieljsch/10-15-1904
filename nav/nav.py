@@ -406,19 +406,21 @@ class Navigator:
                     arrived_units.append(id)
             else:
                 print("Unit", id, "is blocked! Rerouting next turn...")
-                blocked_units.append(id)
+                blocked_units.append((id, dest))
         for unit in arrived_units:
             self.free_unit(unit)
-        for unit in blocked_units:
+        for id, dest in blocked_units:
             self.free_unit(id)
             self.direct_unit(id, dest)
 
-
-    # probably only useful for testing
     def still_navigating(self):
         return ((not not self.traveling_units.keys()) or
                 (not not self.unrouted_units.keys()))
 
+    def still_navigating_unit(self, id):
+        return ((id in self.traveling_units.keys()) or
+                (id in self.unrouted_units.keys()))
+    
     def __find_route(self, unit_id, destination, deps = None):
         '''Routes given unit and appropriately updates data
         structures. Returns true if unit was successfully routed,
@@ -469,21 +471,23 @@ class Navigator:
             print('successfully scouted...')
             return False
         if end is None:
-            print("couldn't find a route for", unit_id, "-- now checking other units")
+            print("unsuccessfully scouted", unit_id, "-- now checking other units")
             print(deps)
 
             if cyclic(deps):
-
+                # probably just move all units circularly (i.e., move
+                # each unit to where its blocking unit is)
                 raise Exception("circular deps detected; implement me")
-            
-            for other_id in deps[unit_id]:
-                dest = self.unrouted_units[other_id]
-                if self.__find_route(other_id, dest, deps):
-                    del self.unrouted_units[other_id]
-                    return False
-                else:
-                    print('failed routing', str(other_id) + ';', 'continuing...')
-                    continue 
+
+            if unit_id in deps.keys():
+                for other_id in deps[unit_id]:
+                    dest = self.unrouted_units[other_id]
+                    if self.__find_route(other_id, dest, deps):
+                        del self.unrouted_units[other_id]
+                        return False
+                    else:
+                        print('failed routing', str(other_id) + ';', 'continuing...')
+                        continue 
         return True
 
     def __scout_continuation(self, unit_id, other_id, deps):
@@ -500,7 +504,8 @@ class Navigator:
             # update dependencies
             if other_id not in deps.keys(): # we haven't explored this node yet
                 if unit_id in deps.keys():
-                    deps[unit_id].append(other_id)
+                    if other_id not in deps[unit_id]:
+                        deps[unit_id].append(other_id)
                 else:
                     deps[unit_id] = [other_id]
 
@@ -508,7 +513,6 @@ class Navigator:
         elif other_id in self.units:
             print("found stationary unit", unit_id,
                   "-- hopefully this doesn't happen often")
-            print(deps)
             return False
         else:
             print('Found unknown unit', other_id)

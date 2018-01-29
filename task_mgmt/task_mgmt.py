@@ -94,19 +94,6 @@ class CompoundTask(Task):
     def is_done(self, worker):
         return len(self.task_queue) == 0
 
-class MoveTo(Task):
-    
-    def __init__(self, location, navigator):
-        '''Takes a MapLocation and the instance of Navigator'''
-        self.loc = location
-        self.nav = navigator
-
-    def execute(worker):
-        navigator.direct_unit(worker.unit, self.location)
-
-    def is_done(worker):
-        return worker.location.map_location() == self.location
-
 class ExampleCompoundTask(CompoundTask):
 
     def __init__(self, location, navigator):
