@@ -26,7 +26,7 @@ class PriorityQueue:
         el = heapq.heappop(self.elements)
         return el[1]
 
-def a_star_search(graph, start, goal, deps = {}):
+def a_star_search(graph, start, goal):
     frontier = PriorityQueue()
     frontier.put(start, 0)
     came_from = {}
@@ -44,7 +44,7 @@ def a_star_search(graph, start, goal, deps = {}):
             final_node = current
             break
 
-        for next in graph.neighbors(current, deps):
+        for next in graph.neighbors(current):
             new_cost = cost_so_far[current] + graph.cost(current, next)
             if next not in cost_so_far or new_cost < cost_so_far[next]:
                 cost_so_far[next] = new_cost
@@ -101,8 +101,10 @@ LocationNode = namedtuple('LocationNode', ['location'])
 class ScoutGraph:
     '''For scouting if a route exists and ordering unit routing. Only
     tracks spatial movement (rather than time and space)'''
-    def __init__(self, gc, continuation):
+    def __init__(self, gc, unit_id, deps, continuation):
         self.gc = gc
+        self.unit_id = unit_id
+        self.deps = deps
         # Passed in to allow units to be routed as they're
         # encountered. Takes 3 parameters: the unit whose path is
         # being scouted, the unit that is encountered, and a
@@ -113,7 +115,7 @@ class ScoutGraph:
         # continuation(unit, other_unit, deps)
         self.continuation = continuation
     
-    def neighbors(self, node, deps):
+    def neighbors(self, node):
         directions = [Direction.East,
                       Direction.North,
                       Direction.Northeast,
@@ -125,10 +127,11 @@ class ScoutGraph:
         def neighbor(d):
             return LocationNode(node.location.add(d))
         moves = [neighbor(d) for d in directions]
-        filtered_moves = [m for m in moves if self.__is_clear(m, deps)]
+        filtered_moves = [m for m in moves if self.__is_clear(m)]
+        
         return filtered_moves
 
-    def __is_clear(self, node, deps):
+    def __is_clear(self, node):
         # idea: if the blocking unit is a friendly one, add this unit
         # to some queue to be processed after that unit moves
         
@@ -148,9 +151,11 @@ class ScoutGraph:
             # route it. Then, treat this tile as though it is occupiable.
 
             # Idea: opt 2 but keep track of dependencies between units
+            # better idea: opt 2 but only route that unit if we fail
             other_unit = self.gc.sense_unit_at_location(node.location)
-            if other_unit:
-                return self.continuation(unit, other_unit, deps)
+            if other_unit is not None:
+                # print('found unit', other_unit)
+                return self.continuation(self.unit_id, other_unit, self.deps)
             else:
                 # print("This message should happen -- delete it later if it does")
                 return False
@@ -185,7 +190,11 @@ class SearchGraph():
         self.__occupations = {} # mapping of turn -> set of occupied
                                 # (x, y) tuple locations
 
-    def neighbors(self, node, d = None):
+    def neighbors(self, node):
+        if node.turn >= 1000:
+            print('Explored entire search graph! (ideally this never happens)')
+            return []
+        
         dont_move = SearchNode(node.location, node.turn+1, node.unit,
                                max(node.heat - 10, 0))
         # unit can move:
@@ -218,13 +227,13 @@ class SearchGraph():
             else:
                 # could be occupiable later if unit is moving
                 unit = self.gc.sense_unit_at_location(location)
-                if unit:
+                if unit is not None:
                     return unit in self.nav.traveling_units.keys()
                 else:
                     # print("This message should happen -- delete it later if it does")
                     return False
 
-        coord = (node.location.x, node.location.y)                
+        coord = (node.location.x, node.location.y)
         return (check_location(node.location)
                 # TODO: check turn and also the turn
                 # swap: . 2 1 . ->
@@ -276,10 +285,15 @@ class SearchGraph():
         return abs(x1 - x2) + abs(y1 - y2)
 
     def success(self, node, goal):
+        # Some options here:
+        #  1. fail if blocked
+        #  2. Choose nearest unoccupied tile to destination (break
+        #  ties by closest to unit)
         
         # TODO
         true_success = (node.location.x == goal.x and
                         node.location.y == goal.y)
+
         if true_success:
             return True
         else:
@@ -301,6 +315,16 @@ class Navigator:
     # idea: if a circular dependency is detected while scouting, then
     # route those units to each other's spaces if there is one (and
     # then try to reroute) (also still route lazily)
+
+    # flow:
+    #  - before moving units, route any unrouted units
+    #  - if an unrouted unit is encountered while scouting, route that unit
+    
+    #     - __find_route -> __scout_blocked ->
+    #       a_star_search(loc_graph) ->
+    #       loc_graph.continuation/__scout_continuation
+    #     - continuation needs: og unit, new unit, deps
+    #        - deps passed in as arg
     
     # Overview of process:
     #  - maintain routes of each unit moving towards its destination
@@ -310,7 +334,7 @@ class Navigator:
     def __init__(self, gc):
         self.gc = gc
         self.graph = SearchGraph(gc, self)
-        self.scout_graph = ScoutGraph(gc, self.__scout_continuation)
+        # self.scout_graph = ScoutGraph(gc, self.__scout_continuation)
         # all units bc they are impassable
         self.units = set()
         # units that are moving and their routes
@@ -337,6 +361,8 @@ class Navigator:
         # TODO figure out how to
         # properly sequence units for dependencies
 
+        still_unrouted = {} # gross
+        
         # route all units that have not yet been routed
         while self.unrouted_units:
             # get one unit and route that one
@@ -347,47 +373,59 @@ class Navigator:
                 del self.unrouted_units[id]
                 continue
             else:
-                raise Exception('couldnt find route for', id)
-                # uhhhh
-            
+                print("Can't route", id, "!")
+                # Gross
+                still_unrouted[id] = self.unrouted_units[id]
+                del self.unrouted_units[id]
 
-            
+        self.unrouted_units = still_unrouted
+                        
             # that one will encounter and subsequently route other units
             # get another unit
-            
         
         units_to_move = [u for u in self.traveling_units
                          if self.gc.unit(u).is_move_ready()]
         arrived_units = []
+        blocked_units = []
         for id, route in self.traveling_units.items():
             unit = self.gc.unit(id)
+            if not route:
+                print('unit', id, 'has no route!!!')
+                continue
             dest = route[-1]
-            if unit.is_move_ready():
-                move = route.popleft()
-                dir = unit.location.map_location().direction_to(move)
-                if dir is Direction.Center:
-                    return
-                elif self.gc.can_move(id, dir):
-                    print("moving unit", id)
-                    self.gc.move_robot(id, dir)
-                    if unit.location.map_location() == dest:
-                        print('Unit', id, 'arrived at destination', (dest.x, dest.y))
-                        arrived_units.append(id)
-                else:
-                    print("Unit", id, "is blocked! Rerouting...")
-                    self.traveling_units[id] = self.__find_route(id, dest)
+            # if unit.is_move_ready(): # TODO - be more careful here
+            move = route.popleft()
+            dir = unit.location.map_location().direction_to(move)
+            if dir is Direction.Center:
+                continue
+            elif self.gc.can_move(id, dir):
+                print("moving unit", id)
+                self.gc.move_robot(id, dir)
+                if unit.location.map_location() == dest:
+                    print('Unit', id, 'arrived at destination', (dest.x, dest.y))
+                    arrived_units.append(id)
+            else:
+                print("Unit", id, "is blocked! Rerouting next turn...")
+                blocked_units.append(id)
         for unit in arrived_units:
             self.free_unit(unit)
+        for unit in blocked_units:
+            self.free_unit(id)
+            self.direct_unit(id, dest)
+
 
     # probably only useful for testing
     def still_navigating(self):
         return ((not not self.traveling_units.keys()) or
                 (not not self.unrouted_units.keys()))
-    
-    def __find_route(self, unit_id, destination, deps = {}):
+
+    def __find_route(self, unit_id, destination, deps = None):
         '''Routes given unit and appropriately updates data
         structures. Returns true if unit was successfully routed,
         false otherwise.'''
+        print("Finding route for unit", unit_id)
+        if deps is None:
+            deps = {}
         unit = self.gc.unit(unit_id)
         start_loc = unit.location.map_location()
         # first try to get there with plain old location search.
@@ -397,27 +435,86 @@ class Navigator:
         start = SearchNode(start_loc, self.gc.round(), unit_id, unit.movement_heat())
         goal = destination
         came_from, end = a_star_search(self.graph, start, goal)
+        if end is None:
+            return False
         path = reconstruct_path(came_from, start, end)
         path = deque([node.location for node in path])
         self.traveling_units[unit_id] = path
+        print('routed unit', unit_id, '\n')
         return True
     
     def __scout_blocked(self, unit_id, start_loc, dest_loc, deps):
+        '''Returns true if path is blocked.'''
         # idea: if we encounter one of our own units that is not yet
         # routed, route that unit, then finish routing ourselves
-        '''Returns true if path is blocked.'''
+        
+        # better idea: if we encounter one of our own units, only
+        # route that one if scout search fails. Do this using a data
+        # structure to store all potentially blocking units (in order)
+
         start = LocationNode(start_loc)
         dest = LocationNode(dest_loc)
         # because we passed in scout_continuation to scout_graph,
         # scout_graph will call it when it encounters a unit while
         # scouting
 
-        # How to get deps through??? Opt1: have them as a field in scout_graph
-        # Opt2: pass them in through A*
-        came_from, end = a_star_search(self.scout_graph, start, dest, deps)
-        return end is None
+        # this time:
+        #  call a continuation that modifies a dependencies object
+        #  that we own to append encountered units. Then we process
+        #  those encountered units if we fail.
+        self.scout_graph = ScoutGraph(self.gc, unit_id, deps,
+                                      self.__scout_continuation)
+        came_from, end = a_star_search(self.scout_graph, start, dest)
+        if end is not None:
+            print('successfully scouted...')
+            return False
+        if end is None:
+            print("couldn't find a route for", unit_id, "-- now checking other units")
+            print(deps)
+
+            if cyclic(deps):
+
+                raise Exception("circular deps detected; implement me")
+            
+            for other_id in deps[unit_id]:
+                dest = self.unrouted_units[other_id]
+                if self.__find_route(other_id, dest, deps):
+                    del self.unrouted_units[other_id]
+                    return False
+                else:
+                    print('failed routing', str(other_id) + ';', 'continuing...')
+                    continue 
+        return True
 
     def __scout_continuation(self, unit_id, other_id, deps):
+        '''Return true if location is occupiable.'''
+        if unit_id == other_id:
+            return True
+        if other_id in self.traveling_units.keys():
+            print("found traveling unit", other_id)
+            # problem: what if a unit is traveling now, but will be
+            # blocking in a bit?
+            return True
+        elif other_id in self.unrouted_units.keys():
+            print('found unrouted unit', other_id)
+            # update dependencies
+            if other_id not in deps.keys(): # we haven't explored this node yet
+                if unit_id in deps.keys():
+                    deps[unit_id].append(other_id)
+                else:
+                    deps[unit_id] = [other_id]
+
+            return False
+        elif other_id in self.units:
+            print("found stationary unit", unit_id,
+                  "-- hopefully this doesn't happen often")
+            print(deps)
+            return False
+        else:
+            print('Found unknown unit', other_id)
+            return False
+
+    def __scout_continuation_old(self, unit_id, other_id, deps):
         '''Update deps for unit_id, route other_id (and any other units that
         are encountered while routing other_id.'''
         if other_id in self.traveling_units.keys():
@@ -436,15 +533,40 @@ class Navigator:
             if cyclic(deps):
                 raise Exception("circular deps detected; implement me")
             dest = self.unrouted_units[unit_id]
-            if self.__find_route(unit_id, dest, deps):
-                del self.unrouted_units[unit_id]
+            if self.__find_route(other_id, dest, deps):
+                del self.unrouted_units[other_id]
                 return True
             else:
                 raise Exception("???")
         elif other_id in self.units:
             print("hopefully this doesn't happen often")
             return False
+        else:
+            raise Exception("!!!")
         
+
+    def __make_scout_continuation(self, cands):
+        def scout_continuation(unit_id, other_id, deps):
+            '''Return true if location is occupiable.'''
+            if unit_id == other_id:
+                return True
+            if other_id in self.traveling_units.keys():
+                print("found traveling unit", other_id)
+                # problem: what if a unit is traveling now, but will be
+                # blocking in a bit?
+                return True
+            elif other_id in self.unrouted_units.keys():
+                print('found unrouted unit', other_id)
+                cands.append(other_id)
+                return False
+            elif other_id in self.units:
+                print("hopefully this doesn't happen often")
+                return False
+            else:
+                print('Found unknown unit', other_id)
+                return False
+        return scout_continuation
+
 
 ### Backup Navigation ######################################
 # TODO Idea is to keep track of total movement of units and fall back
